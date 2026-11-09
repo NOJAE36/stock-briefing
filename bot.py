@@ -9,9 +9,16 @@ import yfinance as yf
 
 TOKEN = os.environ.get('TELEGRAM_TOKEN', '').strip()
 CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '').strip()
+GITHUB_REPO = os.environ.get('GITHUB_REPOSITORY', '').strip()
+
+# GitHub Pages 웹주소 자동 생성 (예: https://아이디.github.io/stock-briefing/)
+if '/' in GITHUB_REPO:
+    owner, repo_name = GITHUB_REPO.split('/')
+    DASHBOARD_URL = f"https://{owner}.github.io/{repo_name}/"
+else:
+    DASHBOARD_URL = "https://github.com/"
 
 def get_ticker_info(symbol):
-    """야후 파이낸스에서 전일 종가와 등락률 수집"""
     try:
         t = yf.Ticker(symbol)
         hist = t.history(period="5d")
@@ -27,7 +34,6 @@ def get_ticker_info(symbol):
     return 0.0, 0.0
 
 def get_news_items(query, tag_label, max_items=2):
-    """구글 뉴스 RSS에서 최신 뉴스(제목, 출처, 시간, 링크) 리스트 추출"""
     items = []
     try:
         encoded_query = urllib.parse.quote(query)
@@ -79,13 +85,11 @@ def main():
     kst_now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
     now_str = kst_now.strftime("%Y-%m-%d %H:%M KST")
 
-    # 1. 실시간 지표 수집 (파이썬이 직접 수집하므로 브라우저 CORS 에러 0%)
     mu_price, mu_pct = get_ticker_info("MU")
     ram_price, ram_pct = get_ticker_info("RAM")
     soxx_price, soxx_pct = get_ticker_info("SOXX")
     krw_rate, krw_pct = get_ticker_info("KRW=X")
 
-    # 2. 내 RAM 포지션 실시간 계산 (평단 $10.0779 / 매입 $58,996)
     my_ram_avg = 10.0779
     my_ram_invest = 58996
     if ram_price > 0:
@@ -100,7 +104,6 @@ def main():
         ram_html_str = "평단 $10.08 (매입 $58,996)"
         ram_color = ""
 
-    # 3. 섹터 및 보유 종목 맞춤형 실시간 뉴스 수집
     news_semi = get_news_items("마이크론 OR DRAM OR HBM 반도체", "[반도체 / RAM]", 2)
     news_macro = get_news_items("미국 증시 금리 환율 OR 코스닥 수급", "[매크로 / 코스닥]", 2)
     news_yg1 = get_news_items("와이지-원 OR 절삭공구 반도체", "[와이지원 / 소부장]", 1)
@@ -108,7 +111,6 @@ def main():
 
     all_news_html = format_html_news(news_semi + news_macro + news_yg1 + news_bio)
 
-    # 4. 모바일 HTML 대시보드(index.html) 자동 생성 및 덮어쓰기
     mu_cls = "positive" if mu_pct >= 0 else "negative"
     soxx_cls = "positive" if soxx_pct >= 0 else "negative"
 
@@ -276,12 +278,12 @@ def main():
 
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html_content)
-    print("✅ index.html 모바일 대시보드 파일 생성 완료!")
 
-    # 5. 텔레그램 메시지 발송
     tg_msg = (
         f"🔥 <b>[마스터 투자 비서] 실시간 시황 &amp; 뉴스 브리핑</b>\n"
         f"⏰ 기준 시각: {now_str}\n\n"
+        f"🔗 <b>[모바일 관제탑 바로가기]</b>\n"
+        f"👉 <a href='{DASHBOARD_URL}'>터치하여 실시간 웹 대시보드 열기</a>\n\n"
         f"⚡ <b>1. 글로벌 반도체 &amp; 매크로 지표</b>\n"
         f"• 마이크론(MU): ${mu_price:.2f} ({mu_pct:+.2f}%)\n"
         f"• 반도체지수(SOXX): ${soxx_price:.2f} ({soxx_pct:+.2f}%)\n"
@@ -289,23 +291,21 @@ def main():
         f"💼 <b>2. 보유 포트폴리오 핵심 점검</b>\n"
         f"• <b>RAM (2X DRAM)</b>: {ram_tg_str}\n"
         f"• <b>KODEX 코스닥150레버리지</b>: -42.81% (1,177만 원)\n"
-        f"• <b>와이지원</b>: -25.00% (630만 원) | 소부장 턴어라운드 대기\n"
-        f"• <b>오름테라퓨틱(계좌1/2)</b>: -86.58% (1,581만) / -85.12% (368만)\n"
-        f"• <b>앱클론</b>: -67.58% (437만 원) | 임상 모멘텀 대기\n"
-        f"• <b>가용 현금 (11월 말)</b>: 1,000만 원 (급락 오버슈팅 시 저점 스윙 대기)\n\n"
-        f"📰 <b>3. 보유 종목 실시간 핵심 뉴스 (클릭 시 이동)</b>\n"
-        f"<b>[반도체 / DRAM / RAM]</b>\n{format_tg_news(news_semi)}\n\n"
-        f"<b>[매크로 / 미·한 증시 / 코스닥]</b>\n{format_tg_news(news_macro)}\n\n"
+        f"• <b>와이지원</b>: -25.00% (630만 원)\n"
+        f"• <b>오름테라퓨틱(계좌1/2)</b>: -86.58% / -85.12%\n"
+        f"• <b>앱클론</b>: -67.58% (437만 원)\n"
+        f"• <b>가용 현금</b>: 1,000만 원 (스윙 대기)\n\n"
+        f"📰 <b>3. 종목별 실시간 핵심 뉴스</b>\n"
+        f"<b>[반도체 / RAM]</b>\n{format_tg_news(news_semi)}\n\n"
+        f"<b>[매크로 / 코스닥]</b>\n{format_tg_news(news_macro)}\n\n"
         f"<b>[와이지원 / 소부장]</b>\n{format_tg_news(news_yg1)}\n\n"
-        f"<b>[오름테라퓨틱 / 앱클론 바이오]</b>\n{format_tg_news(news_bio)}\n\n"
-        f"📌 <i>모바일 웹 대시보드도 최신 데이터로 동시 업데이트되었습니다.</i>"
+        f"<b>[오름테라퓨틱 / 앱클론 바이오]</b>\n{format_tg_news(news_bio)}"
     )
 
     if TOKEN and CHAT_ID:
         url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
         payload = {"chat_id": CHAT_ID, "text": tg_msg, "parse_mode": "HTML", "disable_web_page_preview": True}
-        res = requests.post(url, json=payload)
-        print("텔레그램 전송 상태:", res.status_code)
+        requests.post(url, json=payload)
 
 if __name__ == "__main__":
     main()
