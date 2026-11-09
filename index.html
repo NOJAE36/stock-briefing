@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="1800">
+    <title>마스터 실시간 투자 관제탑</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #131c31;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-green: #4ade80;
+            --accent-red: #f87171;
+            --accent-purple: #c084fc;
+            --border-color: #1e293b;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 16px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        header { text-align: center; margin-bottom: 20px; }
+        header h1 { font-size: 1.25rem; margin: 0 0 6px 0; color: var(--accent-blue); }
+        header p { font-size: 0.8rem; color: var(--text-secondary); margin: 0; }
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.25);
+        }
+        .card h2 {
+            font-size: 0.95rem;
+            margin-top: 0;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.86rem;
+        }
+        .metric-row:last-child { margin-bottom: 0; }
+        .bio-item {
+            background-color: rgba(192, 132, 252, 0.06);
+            border-left: 3px solid var(--accent-purple);
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            border-radius: 0 8px 8px 0;
+        }
+        .bio-item:last-child { margin-bottom: 0; }
+        .bio-title { font-size: 0.84rem; font-weight: bold; color: #f3e8ff; margin: 0 0 4px 0; }
+        .bio-desc { font-size: 0.78rem; color: var(--text-secondary); margin: 0; line-height: 1.35; }
+        .news-item {
+            background-color: rgba(30, 41, 59, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+        }
+        .news-item:last-child { margin-bottom: 0; }
+        .news-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; gap: 6px; }
+        .news-tag { color: var(--accent-blue); font-weight: bold; font-size: 0.75rem; white-space: nowrap; }
+        .news-meta { color: var(--text-secondary); font-size: 0.68rem; background: #1e293b; padding: 2px 6px; border-radius: 4px; text-align: right; }
+        .news-title { font-size: 0.83rem; color: #f1f5f9; line-height: 1.4; margin: 0; }
+        .news-title a { color: #f1f5f9; text-decoration: none; }
+        .news-title a:hover { color: var(--accent-blue); text-decoration: underline; }
+        .label { color: var(--text-secondary); }
+        .value { font-weight: bold; text-align: right; }
+        .positive { color: var(--accent-green); }
+        .negative { color: var(--accent-red); }
+        .live-tag { background-color: rgba(74, 222, 128, 0.12); color: var(--accent-green); padding: 2px 8px; border-radius: 4px; font-size: 0.68rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🔥 마스터 실시간 투자 관제탑</h1>
+        <p>최근 자동 동기화: <strong>2026-11-09 20:53 KST</strong></p>
+    </header>
+
+    <div class="card">
+        <h2>⚡ 1. 글로벌 반도체 & 매크로 지표 <span class="live-tag">AUTO SYNC</span></h2>
+        <div class="metric-row">
+            <span class="label">마이크론 (MU 종가)</span>
+            <span class="value positive">$690.00 (+5.12%)</span>
+        </div>
+        <div class="metric-row">
+            <span class="label">필라델피아 반도체 (SOXX)</span>
+            <span class="value positive">$136.53 (+3.51%)</span>
+        </div>
+        <div class="metric-row">
+            <span class="label">원/달러 환율</span>
+            <span class="value">₩1,344.88 (-0.84%)</span>
+        </div>
+        <div class="metric-row">
+            <span class="label">DRAM 펀더멘털</span>
+            <span class="value positive">AI 서버 HBM 집중 · 범용 공급 부족 지속</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>💼 2. 내 전체 포트폴리오 현황</h2>
+        <div class="metric-row">
+            <span class="label">RAM (평단 $10.08)</span>
+            <span class="value negative">$5.13 (-49.10% / $30,031 · 약 4,039만 원)</span>
+        </div>
+        <div class="metric-row">
+            <span class="label">KODEX 코스닥150레버리지</span>
+            <span class="value negative">-42.81% (1,177만 원)</span>
+        </div>
+        <div class="metric-row">
+            <span class="label">와이지원 (소부장)</span>
+            <span class="value negative">-25.00% (630만 원)</span>
+        </div>
+        <div class="metric-row">
+            <span class="label">오름테라퓨틱 (계좌1 / 계좌2)</span>
+            <span class="value negative">-86.58% (1,581만) / -85.12% (368만)</span>
+        </div>
+        <div class="metric-row">
+            <span class="label">앱클론</span>
+            <span class="value negative">-67.58% (437만 원)</span>
+        </div>
+        <div class="metric-row">
+            <span class="label">11월 말 가용 현금</span>
+            <span class="value" style="color:var(--accent-blue);">1,000만 원 (급락 오버슈팅 저점 대기)</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📰 3. 종목별 실시간 뉴스 (터치 시 원문 이동)</h2>
+        
+        <div class="news-item">
+            <div class="news-header">
+                <span class="news-tag">[반도체 / RAM]</span>
+                <span class="news-meta">2026-11-09 15:44 KST | 코리아리포트</span>
+            </div>
+            <p class="news-title"><a href="https://news.google.com/rss/articles/CBMicEFVX3lxTFB6MVFJNjJVRUVCYkNPajRsZl9KZXJtSWNwZ2lZemkycXBiMXVjdFZQSGVxN0pSYjVwQWRsVk5vUTVCdzVubVZaVWFfalp5VDRrYWduLXNZc18xWmJmTklDNWgwcW5MUC1HZlluZmlrZVI?oc=5" target="_blank">'HBM 기술통' 삼성 이어 하이닉스도 미국총괄에 기용</a></p>
+        </div>
+
+        <div class="news-item">
+            <div class="news-header">
+                <span class="news-tag">[반도체 / RAM]</span>
+                <span class="news-meta">2026-11-09 16:31 KST | 마켓인</span>
+            </div>
+            <p class="news-title"><a href="https://news.google.com/rss/articles/CBMic0FVX3lxTFAwWTVvSzFVMHRhV3FKbEg3bHNoVnd5NVNHeTdHVlRadXZkSDNCR1g4V3hlckd2RTNqcVlEaVN1Ukh6VGxhblJ5VmpuOVUxd3EwRE5xNXVLbnRhSVc2TVJDemYtVE45MURDclI5RHB0dEpxSFU?oc=5" target="_blank">HBM 넘어 AI 시스템 전체로…삼성·SK, '광연결'로 기술 영토 확장</a></p>
+        </div>
+
+        <div class="news-item">
+            <div class="news-header">
+                <span class="news-tag">[매크로 / 코스닥]</span>
+                <span class="news-meta">2026-11-09 08:31 KST | 뉴스핌</span>
+            </div>
+            <p class="news-title"><a href="https://news.google.com/rss/articles/CBMiXEFVX3lxTFBpVkhmdUs1Tm4tNFA0NW5pcnNXS2NZVU93Wkl3V2Y1NFdDdTRMSXpzY0lLNVdqR0dYcVJSMVJsUW1mR2lfVXNhbFhibjdYR3NCWnVibXJGVDlpcjdE?oc=5" target="_blank">[AI MY 증시전망] 美 반도체주 반등에 국내 증시 급락 딛나…외국인 수급이 관건</a></p>
+        </div>
+
+        <div class="news-item">
+            <div class="news-header">
+                <span class="news-tag">[매크로 / 코스닥]</span>
+                <span class="news-meta">2026-09-03 16:00 KST | YTN</span>
+            </div>
+            <p class="news-title"><a href="https://news.google.com/rss/articles/CBMiXkFVX3lxTE9TRVo0Z0FMVERWaTRLUUlIR2g5Ym84ZXFqYXNVc2U2NTQ4ZUNmWG1BUjNMeEg5d2VnaUxLcmhIT0lOQjYySmNXWE5EOHNHVXRqWlJfMFBfS0dYYWhfSkE?oc=5" target="_blank">미 증시 강세에 코스피 소폭 상승...코스닥은 하락</a></p>
+        </div>
+
+        <div class="news-item">
+            <div class="news-header">
+                <span class="news-tag">[와이지원 / 소부장]</span>
+                <span class="news-meta">2026-11-04 06:06 KST | IndexBox</span>
+            </div>
+            <p class="news-title"><a href="https://news.google.com/rss/articles/CBMi0wFBVV95cUxPSHVTOVFKSFhkbURXQXQzTUQ1Z2pjUTY4cVJ6ZGJoODVhUEEtSXJDZllvSzFvQ0dXOGMzVUtQbE9XMEZGZG5BVlE0b3AyWGVMb2Zuc04tWHZ0eDdLVlFHTXhjeElJQ0x5bUVpb0dSemRTbXFZVUlkZHhkX2kzQ3ZjbW0xWnduUUpORDVWRkIzMWNpVVMyeTZZV3N0REJBdlFubXBUM25ZT2RDXzZFSjZrU2xkek4tR2UwSzgxb056UDNURWkzOGczX2VCeHNGdG5QYU1V?oc=5" target="_blank">2035년 다이아몬드 코팅 시장: 절삭공구·반도체 수요가 성장 견인 - 뉴스 및 통계</a></p>
+        </div>
+
+        <div class="news-item">
+            <div class="news-header">
+                <span class="news-tag">[바이오 / 임상]</span>
+                <span class="news-meta">2026-11-09 14:13 KST | Chosunbiz</span>
+            </div>
+            <p class="news-title"><a href="https://news.google.com/rss/articles/CBMihwFBVV95cUxPQ2RjRTZMeHZ4UVg0QlhoMjBFdDMwNE96bktkblFMNmFoc0pLR0VJOGNJMVdaMEZqSTEzOWowN3RGWFFhSjc2OTdxT2hnNnktZEQzZmJoUWFPU01mT1dfVWhWMlJiejJBVEFhZ0ZXT3RVTVNMUFRXXzczVDRXYlpSNnB0OGZwUk3SAZsBQVVfeXFMT043aC04V0dMbVBDMkU1TXpBbzFKMnlBazFWVTJwSXNrWkxmUnhrY01rUV9rcGZqYjlXRXRIbl9aR1JSUHFLaHF2TG5mOHY0T1N0OUFwZXFTeW1EZzA1UXJtdy1TdVpDbUpQRnhleDFvOWREMWhxSzItR2J1bk0zWS13OHYxUjE3c1dNWTNBaXdlcU5JdXZyRFp3M0k?oc=5" target="_blank">앱클론, 종근당과 CAR-T 치료제 ‘네스페셀’ 국내 공급·판매 계약</a></p>
+        </div>
+
+        <div class="news-item">
+            <div class="news-header">
+                <span class="news-tag">[바이오 / 임상]</span>
+                <span class="news-meta">2026-11-09 13:44 KST | 바이오스펙테이터</span>
+            </div>
+            <p class="news-title"><a href="https://news.google.com/rss/articles/CBMiV0FVX3lxTE5ZWGVlWnBYQVRrSWVGeUNFZXJTVlBzMV9FdkVlbzVGbjVwS0ZtV01TSFJIZFdEbTZhR29VNE1NQTBidWtWODJFMThXc05BdkQwdGpBSkNPZw?oc=5" target="_blank">앱클론, 종근당과 'CD19 CAR-T' 국내 독점판매 본계약</a></p>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🧬 4. 바이오 임상 & 마일스톤 캘린더</h2>
+        <div class="bio-item">
+            <p class="bio-title">오름테라퓨틱 (ORM-1153 등 DAC 파이프라인)</p>
+            <p class="bio-desc">• CD123 표적 후속 파이프라인 IND 제출 및 글로벌 학회 발표 모멘텀 주시<br>• 임상 및 신규 L/O 이벤트 발생 시 계좌2부터 단계적 비중 축소 타점 조율</p>
+        </div>
+        <div class="bio-item">
+            <p class="bio-title">앱클론 (AT101 CAR-T / AC101 파트너사 3상)</p>
+            <p class="bio-desc">• AT101(네스페셀) 국내 임상 2상 데이터 및 품목허가 신청 일정 점검<br>• 중국 헨리우스 AC101 위암 글로벌 임상 3상 결과 및 마일스톤 유입 대기</p>
+        </div>
+    </div>
+</body>
+</html>
