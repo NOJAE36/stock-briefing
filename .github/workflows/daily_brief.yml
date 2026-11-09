@@ -2,12 +2,14 @@ name: Daily Stock Briefing
 
 on:
   schedule:
-    # 매일 한국 시간 아침 7시 30분 (UTC 기준 전날 22:30) 자동 실행
+    # 1. 매일 아침 7시 30분 KST (UTC 기준 전날 22:30)
     - cron: '30 22 * * *'
+    # 2. 매일 밤 10시 00분 KST (미국 장 시작 전, UTC 기준 13:00)
+    - cron: '0 13 * * *'
   workflow_dispatch:
 
 permissions:
-  contents: write # 봇이 index.html 파일을 저장소에 자동 저장할 수 있도록 권한 부여
+  contents: write
 
 jobs:
   send-brief:
@@ -29,6 +31,7 @@ jobs:
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           python bot.py
 
