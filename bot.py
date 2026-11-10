@@ -138,4 +138,68 @@ def main():
 
     <div class="card">
         <h2>💼 2. 전 종목 실수량 · 평단가 자동 평가 현황</h2>
-        <div class="row"><span><b>RAM</b> (5,854주·평단 $10.08)<br><span class="sub">현재 ${ram_p:.2f} ({ram_pct:+.2f}%)</span></span><span class="{'pos' if ram_ret>=0 else 'neg'}" style="text-align:right;">{ram_ret:+.2
+        <div class="row"><span><b>RAM</b> (5,854주·평단 $10.08)<br><span class="sub">현재 ${ram_p:.2f} ({ram_pct:+.2f}%)</span></span><span class="{'pos' if ram_ret>=0 else 'neg'}" style="text-align:right;">{ram_ret:+.2f}%<br>${ram_eval_usd:,.0f} ({ram_eval_krw//10000:,}만)</span></div>
+        <div class="row"><span><b>코스닥150레버리지</b> (3,354주·평단 6,152원)<br><span class="sub">현재 ₩{kq_p:,.0f} ({kq_pct:+.2f}%)</span></span><span class="{'pos' if kq_ret>=0 else 'neg'}" style="text-align:right;">{kq_ret:+.2f}%<br>{kq_eval:,}원</span></div>
+        <div class="row"><span><b>와이지-원</b> (656주·평단 12,910원)<br><span class="sub">현재 ₩{yg_p:,.0f} ({yg_pct:+.2f}%)</span></span><span class="{'pos' if yg_ret>=0 else 'neg'}" style="text-align:right;">{yg_ret:+.2f}%<br>{yg_eval:,}원</span></div>
+        <div class="row"><span><b>오름테라퓨틱(계좌1)</b> (1,097주·평단 107,113원)<br><span class="sub">현재 ₩{or1_p:,.0f} ({or1_pct:+.2f}%)</span></span><span class="{'pos' if or1_ret>=0 else 'neg'}" style="text-align:right;">{or1_ret:+.2f}%<br>{or1_eval:,}원</span></div>
+        <div class="row"><span><b>오름테라퓨틱(계좌2)</b> (256주·평단 96,650원)<br><span class="sub">현재 ₩{or2_p:,.0f} ({or2_pct:+.2f}%)</span></span><span class="{'pos' if or2_ret>=0 else 'neg'}" style="text-align:right;">{or2_ret:+.2f}%<br>{or2_eval:,}원</span></div>
+        <div class="row"><span><b>앱클론</b> (256주·평단 52,735원)<br><span class="sub">현재 ₩{ab_p:,.0f} ({ab_pct:+.2f}%)</span></span><span class="{'pos' if ab_ret>=0 else 'neg'}" style="text-align:right;">{ab_ret:+.2f}%<br>{ab_eval:,}원</span></div>
+        <div class="row"><span><b>가용 현금 (스윙 대기)</b></span><span style="color:#38bdf8;font-weight:bold;">{cash_eval:,}원</span></div>
+    </div>
+
+    <div class="card">
+        <h2>🎯 3. 현금 1,000만 원 기술적 투입 시그널</h2>
+        <div class="sig-box">
+            <b>🇺🇸 마이크론(MU) / RAM</b> (MU ${mu_p:.2f} | 환율 ₩{krw_p:,.1f})<br>
+            • MU RSI(14): <b>{mu_rsi:.1f}</b> | 20일선 이격: <b>{mu_disp:+.1f}%</b><br>
+            👉 판정: <span class="pos">{mu_sig}</span> → <b>{mu_cash}</b>
+        </div>
+        <div class="sig-box" style="border-left-color:#c084fc;margin-bottom:0;">
+            <b>🇰🇷 KODEX 코스닥150레버리지</b><br>
+            • RSI(14): <b>{kq_rsi:.1f}</b> | 20일선 이격: <b>{kq_disp:+.1f}%</b><br>
+            👉 판정: <span class="pos">{kq_sig}</span> → <b>{kq_cash}</b>
+        </div>
+    </div>
+
+    <div class="card"><h2>📰 4. 최근 48시간 최신 속보</h2>{news_html}</div>
+
+    <script>
+        new Chart(document.getElementById('pfChart'), {{
+            type: 'doughnut',
+            data: {{
+                labels: ['RAM(반도체)', '바이오(오름·앱클론)', '코스닥150레버리지', '가용현금', '와이지-원'],
+                datasets: [{{
+                    data: [{ram_eval_krw//10000}, {bio_eval_krw//10000}, {kq_eval//10000}, {cash_eval//10000}, {yg_eval//10000}],
+                    backgroundColor: ['#38bdf8', '#c084fc', '#f87171', '#4ade80', '#fbbf24'],
+                    borderWidth: 0
+                }}]
+            }},
+            options: {{ plugins: {{ legend: {{ position: 'bottom', labels: {{ color: '#cbd5e1', font: {{ size: 11 }} }} }} }}, cutout: '62%' }}
+        }});
+    </script>
+    </body></html>"""
+
+    with open("index.html", "w", encoding="utf-8") as f: f.write(html)
+
+    # 5. 텔레그램 브리핑 전송
+    tg_msg = (
+        f"🔥 <b>[마스터 관제탑 V4] 실수량 기반 전 종목 자동 브리핑</b>\n"
+        f"⏰ {now_str} | 총자산: <b>{total_eval_krw//10000:,}만 원</b>\n"
+        f"👉 <a href='{DASHBOARD_URL}'>터치하여 도넛 차트 &amp; 웹 관제탑 열기</a>\n\n"
+        f"💼 <b>1. 보유 전 종목 실시간 평가 &amp; 수익률</b>\n"
+        f"• <b>RAM (5,854주)</b>: ${ram_p:.2f} ({ram_pct:+.2f}%) | <b>{ram_ret:+.2f}%</b> (${ram_eval_usd:,.0f})\n"
+        f"• <b>코스닥레버리지 (3,354주)</b>: ₩{kq_p:,.0f} ({kq_pct:+.2f}%) | <b>{kq_ret:+.2f}%</b> ({kq_eval:,}원)\n"
+        f"• <b>와이지-원 (656주)</b>: ₩{yg_p:,.0f} ({yg_pct:+.2f}%) | <b>{yg_ret:+.2f}%</b> ({yg_eval:,}원)\n"
+        f"• <b>오름 계좌1 (1,097주)</b>: ₩{or1_p:,.0f} ({or1_pct:+.2f}%) | <b>{or1_ret:+.2f}%</b> ({or1_eval:,}원)\n"
+        f"• <b>오름 계좌2 (256주)</b>: ₩{or2_p:,.0f} | <b>{or2_ret:+.2f}%</b> ({or2_eval:,}원)\n"
+        f"• <b>앱클론 (256주)</b>: ₩{ab_p:,.0f} ({ab_pct:+.2f}%) | <b>{ab_ret:+.2f}%</b> ({ab_eval:,}원)\n\n"
+        f"🎯 <b>2. 현금 1,000만 원 기술적 타점 (RSI·이격도)</b>\n"
+        f"• <b>MU</b>: RSI {mu_rsi:.1f} / 이격 {mu_disp:+.1f}% ➔ <b>{mu_sig} ({mu_cash})</b>\n"
+        f"• <b>코스닥레버리지</b>: RSI {kq_rsi:.1f} / 이격 {kq_disp:+.1f}% ➔ <b>{kq_sig} ({kq_cash})</b>\n\n"
+        f"📰 <b>3. 최근 48시간 핵심 속보</b>\n{news_tg}"
+    )
+    if TOKEN and CHAT_ID:
+        requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json={"chat_id": CHAT_ID, "text": tg_msg, "parse_mode": "HTML", "disable_web_page_preview": True})
+
+if __name__ == "__main__":
+    main()
