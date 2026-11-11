@@ -2,12 +2,12 @@ name: Daily Stock Briefing
 
 on:
   schedule:
-    - cron: '30 22 * * *'  # 한국시간 아침 07:30
-    - cron: '0 13 * * *'   # 한국시간 밤 22:00
-  workflow_dispatch:       # 수동 실행 버튼 활성화
+    - cron: '30 22 * * *'
+    - cron: '0 13 * * *'
+  workflow_dispatch:
 
 permissions:
-  contents: write          # index.html 자동 저장 권한 부여
+  contents: write
 
 jobs:
   build:
@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -33,11 +35,10 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: python bot.py
 
-      - name: Commit and Push index.html
+      - name: Force Commit and Push index.html
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --staged --quiet || git commit -m "Auto-update V5 dashboard"
-          git pull --rebase origin main || true
-          git push origin HEAD:main
+          git commit -m "Auto-update V5 dashboard" || echo "No changes to commit"
+          git push origin HEAD:main --force
