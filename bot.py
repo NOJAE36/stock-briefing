@@ -25,7 +25,7 @@ PORTFOLIO = {
 }
 
 # [2] 종목별 백테스팅 최적화 맞춤 파라미터 (RSI 기준값 / 20일선 이격도 기준값)
-CUSTOM_PARAMS = {
+CUSTOM_PARAMS = {'MU': {'rsi_cut': 42, 'disp_cut': -15.0}, 'KODEX_LEV': {'rsi_cut': 32, 'disp_cut': -15.0}, 'YG1': {'rsi_cut': 32, 'disp_cut': -15.0}, 'ORUM': {'rsi_cut': 40, 'disp_cut': -15.0}, 'ABCLON': {'rsi_cut': 35, 'disp_cut': -15.0}}
     "MU": {"rsi_cut": 36.0, "disp_cut": -7.5},
     "KODEX_LEV": {"rsi_cut": 34.0, "disp_cut": -9.0},
     "YG1": {"rsi_cut": 38.0, "disp_cut": -7.0},
