@@ -7,13 +7,11 @@ CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '').strip()
 GITHUB_REPO = os.environ.get('GITHUB_REPOSITORY', '').strip().lower()
 EVENT_NAME = os.environ.get('GITHUB_EVENT_NAME', '').strip()
 
-# 텔레그램 정기 브리핑 발송 시간 (한국시간 기준 오전 8시, 밤 10시)
 NOTIFY_HOURS_KST = [8, 22]
 
 CACHE_BUST = datetime.datetime.now().strftime("%m%d%H%M")
 DASHBOARD_URL = f"https://{GITHUB_REPO.split('/')[0]}.github.io/{GITHUB_REPO.split('/')[1]}/?v={CACHE_BUST}" if '/' in GITHUB_REPO else f"https://nojae36.github.io/stock-briefing/?v={CACHE_BUST}"
 
-# [1] 기존 보유 포트폴리오 (손절 로직 적용 제외 - 본전 회복 및 장기/구조적 홀딩 관리)
 PORTFOLIO = {
     "RAM": {"symbol": "RAM", "avg_usd": 10.0779, "qty": 5854, "fallback_usd": 10.08},
     "KODEX_LEV": {"name": "KODEX 코스닥150레버리지", "tickers": ["233740.KS"], "avg_krw": 6152, "qty": 3354, "fallback_krw": 3880},
@@ -24,22 +22,19 @@ PORTFOLIO = {
     "CASH": {"name": "가용 현금", "eval_krw": 10000000}
 }
 
-# [2] 종목별 백테스팅 최적화 맞춤 파라미터 (RSI 기준값 / 20일선 이격도 기준값)
-CUSTOM_PARAMS = {'MU': {'rsi_cut': 42, 'disp_cut': -15.0}, 'KODEX_LEV': {'rsi_cut': 32, 'disp_cut': -15.0}, 'YG1': {'rsi_cut': 32, 'disp_cut': -15.0}, 'ORUM': {'rsi_cut': 40, 'disp_cut': -15.0}, 'ABCLON': {'rsi_cut': 35, 'disp_cut': -15.0}}
+CUSTOM_PARAMS = {
     "MU": {"rsi_cut": 36.0, "disp_cut": -7.5},
     "KODEX_LEV": {"rsi_cut": 34.0, "disp_cut": -9.0},
     "YG1": {"rsi_cut": 38.0, "disp_cut": -7.0},
     "ORUM": {"rsi_cut": 32.0, "disp_cut": -11.0},
-    "ABCLON": {"rsi_cut": 32.0, "disp_cut": -11.0},
+    "ABCLON": {"rsi_cut": 32.0, "disp_cut": -11.0}
 }
 
-# [3] 신규 진입 물량 전용 트레일링 스탑 감시 리스트 (신규 매수 시 아래 주석을 해제하고 입력)
+# 신규 진입 물량 전용 트레일링 스탑 리스트 (신규 매수 시에만 주석 해제 후 입력)
 NEW_TRANCHES = [
-    # 예시: {"name": "RAM 신규1차", "symbol": "RAM", "entry_date": "2026-11-15", "entry_price": 9.50, "qty": 200, "trail_pct": -7.0, "target_pct": 12.0},
-    # 예시: {"name": "코스닥레버 신규1차", "symbol": "233740.KS", "entry_date": "2026-11-18", "entry_price": 3700, "qty": 800, "trail_pct": -7.0, "target_pct": 12.0},
+    # {"name": "RAM 신규1차", "symbol": "RAM", "entry_date": "2026-11-15", "entry_price": 9.50, "qty": 200, "trail_pct": -7.0, "target_pct": 12.0},
 ]
 
-# [4] DRAM/반도체 실적 및 바이오 학회·임상 핵심 일정 (한국시간 기준)
 KEY_EVENTS = [
     {"date": "2026-11-18", "cat": "🔥AI·DRAM", "title": "엔비디아(NVDA) FY27 3Q 실적발표 (HBM 수요 풍향계)"},
     {"date": "2026-12-10", "cat": "🏦매크로", "title": "미국 12월 FOMC 금리결정 및 점도표 발표"},
@@ -47,13 +42,12 @@ KEY_EVENTS = [
     {"date": "2026-12-17", "cat": "💾DRAM", "title": "마이크론(MU) FY27 1Q 실적발표 (RAM 직접 모멘텀)"},
     {"date": "2027-01-08", "cat": "💾DRAM", "title": "삼성전자 2026 4Q 잠정실적 발표 (메모리 마진 확인)"},
     {"date": "2027-01-11", "cat": "🧬바이오", "title": "2027 JP모건 헬스케어 컨퍼런스 (글로벌 기술이전 시즌)"},
-    {"date": "2027-01-22", "cat": "💾DRAM", "title": "SK하이닉스 2026 4Q 실적발표 (HBM3E·HBM4 가이던스)"},
+    {"date": "2027-01-22", "cat": "💾DRAM", "title": "SK하이닉스 2026 4Q 실적발표 (HBM3E·HBM4 가이던스)"}
 ]
 
 def build_dday_section(now_kst):
     today = now_kst.date()
-    html_badges = []
-    tg_lines = []
+    html_badges, tg_lines = [], []
     for ev in KEY_EVENTS:
         ev_date = datetime.date.fromisoformat(ev["date"])
         diff = (ev_date - today).days
@@ -71,14 +65,17 @@ def build_dday_section(now_kst):
     return "".join(html_badges), "\n".join(tg_lines)
 
 def get_quad_verified_metrics(tickers, rsi_cut=38.0, disp_cut=-8.0, is_core_cash_target=True):
-    if isinstance(tickers, str): tickers = [tickers]
+    if isinstance(tickers, str):
+        tickers = [tickers]
     for sym in tickers:
         try:
             t = yf.Ticker(sym)
-            hist = t.history(period="6mo")
-            if hist.empty: continue
+            hist = t.history(period="6mo", timeout=10)
+            if hist.empty:
+                continue
             df = hist.dropna(subset=['Close']).copy()
-            if len(df) < 5: continue
+            if len(df) < 5:
+                continue
 
             reg_curr = float(df['Close'].iloc[-1])
             reg_prev = float(df['Close'].iloc[-2]) if len(df) >= 2 else reg_curr
@@ -88,7 +85,7 @@ def get_quad_verified_metrics(tickers, rsi_cut=38.0, disp_cut=-8.0, is_core_cash
 
             if not sym.endswith(('.KS', '.KQ')) and sym != 'KRW=X':
                 try:
-                    intra = t.history(period="5d", interval="5m", prepost=True)
+                    intra = t.history(period="5d", interval="5m", prepost=True, timeout=10)
                     if not intra.empty:
                         intra_clean = intra.dropna(subset=['Close'])
                         if not intra_clean.empty:
@@ -155,14 +152,13 @@ def get_quad_verified_metrics(tickers, rsi_cut=38.0, disp_cut=-8.0, is_core_cash
             lower_wick_ratio = ((min(c_open, curr) - c_low) / candle_range) if candle_range > 0 else 0.0
             bullish_rebound = (curr >= c_open) or (lower_wick_ratio >= 0.35)
 
-            # 종목별 맞춤 RSI 및 이격도 기준값 적용
             c1_oversold = (rsi < rsi_cut) or (disp20 <= disp_cut)
             c2_support = (pct_b <= 0.18) or (curr >= ma60)
             c3_momentum = macd_turn
             c4_volume = (vol_ratio >= 1.2 and bullish_rebound) or (bullish_rebound and rsi < (rsi_cut - 6.0))
 
             score = int(c1_oversold) + int(c2_support) + int(c3_momentum) + int(c4_volume)
-            chk_str = f"[{'O' if c1_oversold else 'X'}과매도(RSI<{rsi_cut:.0f}/이격{disp_cut:.1f}%) | {'O' if c2_support else 'X'}지지 | {'O' if c3_momentum else 'X'}MACD | {'O' if c4_volume else 'X'}수급]"
+            chk_str = f"[{'O' if c1_oversold else 'X'}과매도(RSI {rsi_cut:.0f}미만/이격 {disp_cut:.1f}%) | {'O' if c2_support else 'X'}지지 | {'O' if c3_momentum else 'X'}MACD | {'O' if c4_volume else 'X'}수급]"
 
             is_buy_alert = False
             if c1_oversold and score == 4:
@@ -193,13 +189,13 @@ def get_quad_verified_metrics(tickers, rsi_cut=38.0, disp_cut=-8.0, is_core_cash
 def evaluate_new_tranches():
     if not NEW_TRANCHES:
         return '<div class="sub">현재 가용 현금으로 신규 진입한 단기 스윙 물량이 없습니다. (기존 보유 물량은 트레일링 스탑 제외)</div>', "", False
-    rows_html = []
-    tg_rows = []
+    rows_html, tg_rows = [], []
     exit_alert = False
     for tr in NEW_TRANCHES:
         try:
-            hist = yf.Ticker(tr["symbol"]).history(start=tr["entry_date"])
-            if hist.empty: continue
+            hist = yf.Ticker(tr["symbol"]).history(start=tr["entry_date"], timeout=10)
+            if hist.empty:
+                continue
             curr_p = float(hist['Close'].iloc[-1])
             peak_p = max(float(hist['High'].max()), float(tr["entry_price"]))
             ret_entry = ((curr_p - tr["entry_price"]) / tr["entry_price"]) * 100.0
@@ -222,10 +218,13 @@ def evaluate_new_tranches():
             continue
     return "".join(rows_html), "\n".join(tg_rows), exit_alert
 
-def calc_kr_holding(key, param_key, is_core=False):
+def calc_kr_holding(key, param_key, is_core=False, cached_m=None):
     item = PORTFOLIO[key]
-    p_cfg = CUSTOM_PARAMS.get(param_key, {"rsi_cut": 38.0, "disp_cut": -8.0})
-    m = get_quad_verified_metrics(item["tickers"], rsi_cut=p_cfg["rsi_cut"], disp_cut=p_cfg["disp_cut"], is_core_cash_target=is_core)
+    if cached_m is not None:
+        m = dict(cached_m)
+    else:
+        p_cfg = CUSTOM_PARAMS.get(param_key, {"rsi_cut": 38.0, "disp_cut": -8.0})
+        m = get_quad_verified_metrics(item["tickers"], rsi_cut=p_cfg["rsi_cut"], disp_cut=p_cfg["disp_cut"], is_core_cash_target=is_core)
     curr_p = m["curr"] if m["curr"] > 0 else float(item["fallback_krw"])
     eval_krw = int(curr_p * item["qty"])
     ret_pct = ((curr_p - item["avg_krw"]) / item["avg_krw"]) * 100
@@ -236,15 +235,20 @@ def get_latest_strict_news(query, tag, max_items=2, max_hours=48):
     items = []
     try:
         url = f"https://news.google.com/rss/search?q={urllib.parse.quote(query)}&hl=ko&gl=KR&ceid=KR:ko"
+        resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=5)
         now_kst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
-        for entry in feedparser.parse(url).entries:
-            if not hasattr(entry, 'published'): continue
+        for entry in feedparser.parse(resp.content).entries:
+            if not hasattr(entry, 'published'):
+                continue
             pub_kst = parsedate_to_datetime(entry.published).astimezone(datetime.timezone(datetime.timedelta(hours=9)))
-            if (now_kst - pub_kst).total_seconds() / 3600 > max_hours: continue
+            if (now_kst - pub_kst).total_seconds() / 3600 > max_hours:
+                continue
             title = (entry.title.rsplit(' - ', 1)[0] if ' - ' in entry.title else entry.title).replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
             items.append({"tag": tag, "title": title, "source": getattr(entry, 'source', {}).get('title', '주요언론'), "time": pub_kst.strftime("%m/%d %H:%M"), "link": entry.link})
-            if len(items) >= max_items: break
-    except Exception: pass
+            if len(items) >= max_items:
+                break
+    except Exception:
+        pass
     return items
 
 def render_sig_card(title, price_str, m, border_color):
@@ -281,7 +285,7 @@ def main():
     kq = calc_kr_holding("KODEX_LEV", "KODEX_LEV", is_core=True)
     yg = calc_kr_holding("YG1", "YG1", is_core=False)
     or1 = calc_kr_holding("ORUM1", "ORUM", is_core=False)
-    or2 = calc_kr_holding("ORUM2", "ORUM", is_core=False)
+    or2 = calc_kr_holding("ORUM2", "ORUM", is_core=False, cached_m=or1)
     ab = calc_kr_holding("ABCLON", "ABCLON", is_core=False)
     cash_eval = PORTFOLIO["CASH"]["eval_krw"]
 
@@ -417,7 +421,7 @@ def main():
             f"{tranche_section}\n"
             f"📰 <b>최근 48시간 핵심 속보</b>\n{news_tg}"
         )
-        requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json={"chat_id": CHAT_ID, "text": tg_msg, "parse_mode": "HTML", "disable_web_page_preview": True})
+        requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json={"chat_id": CHAT_ID, "text": tg_msg, "parse_mode": "HTML", "disable_web_page_preview": True}, timeout=10)
 
 if __name__ == "__main__":
     main()
