@@ -4,9 +4,9 @@ import requests, feedparser, yfinance as yf
 
 TOKEN = os.environ.get('TELEGRAM_TOKEN', '').strip()
 CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '').strip()
-GITHUB_REPO = os.environ.get('GITHUB_REPOSITORY', '').strip()
-DASHBOARD_URL = f"https://{GITHUB_REPO.split('/')[0]}.github.io/{GITHUB_REPO.split('/')[1]}/" if '/' in GITHUB_REPO else "https://nojae36.github.io/stock-briefing/"
-
+GITHUB_REPO = os.environ.get('GITHUB_REPOSITORY', '').strip().lower()
+CACHE_BUST = datetime.datetime.now().strftime("%m%d%H%M")
+DASHBOARD_URL = f"https://{GITHUB_REPO.split('/')[0]}.github.io/{GITHUB_REPO.split('/')[1]}/?v={CACHE_BUST}" if '/' in GITHUB_REPO else f"https://nojae36.github.io/stock-briefing/?v={CACHE_BUST}"
 # [실제 평단가 및 보유 수량 100% 반영 마스터 데이터]
 PORTFOLIO = {
     "RAM": {"symbol": "RAM", "avg_usd": 10.0779, "qty": 5854, "fallback_usd": 10.08},
