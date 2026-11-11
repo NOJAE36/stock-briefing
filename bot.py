@@ -7,7 +7,7 @@ CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '').strip()
 GITHUB_REPO = os.environ.get('GITHUB_REPOSITORY', '').strip().lower()
 CACHE_BUST = datetime.datetime.now().strftime("%m%d%H%M")
 DASHBOARD_URL = f"https://{GITHUB_REPO.split('/')[0]}.github.io/{GITHUB_REPO.split('/')[1]}/?v={CACHE_BUST}" if '/' in GITHUB_REPO else f"https://nojae36.github.io/stock-briefing/?v={CACHE_BUST}"
-# [실제 평단가 및 보유 수량 100% 반영 마스터 데이터]
+
 PORTFOLIO = {
     "RAM": {"symbol": "RAM", "avg_usd": 10.0779, "qty": 5854, "fallback_usd": 10.08},
     "KODEX_LEV": {"name": "KODEX 코스닥150레버리지", "tickers": ["233740.KS"], "avg_krw": 6152, "qty": 3354, "fallback_krw": 3880},
@@ -22,10 +22,39 @@ def get_quad_verified_metrics(tickers):
     if isinstance(tickers, str): tickers = [tickers]
     for sym in tickers:
         try:
-            hist = yf.Ticker(sym).history(period="6mo")
+            t = yf.Ticker(sym)
+            hist = t.history(period="6mo")
             if hist.empty: continue
-            df = hist.dropna(subset=['Close'])
+            df = hist.dropna(subset=['Close']).copy()
             if len(df) < 5: continue
+
+            reg_curr = float(df['Close'].iloc[-1])
+            reg_prev = float(df['Close'].iloc[-2]) if len(df) >= 2 else reg_curr
+            curr = reg_curr
+            prev = reg_prev
+            session_tag = "☀️본장"
+
+            # 미국 주식(MU, RAM)은 prepost=True로 프리장/애프터장 5분봉 최신 체결가 추출
+            if not sym.endswith(('.KS', '.KQ')) and sym != 'KRW=X':
+                try:
+                    intra = t.history(period="5d", interval="5m", prepost=True)
+                    if not intra.empty:
+                        intra_clean = intra.dropna(subset=['Close'])
+                        if not intra_clean.empty:
+                            curr = float(intra_clean['Close'].iloc[-1])
+                            last_ts = intra_clean.index[-1]
+                            hm = last_ts.hour * 60 + last_ts.minute
+                            if 240 <= hm < 570:
+                                session_tag = "🌅프리장"
+                            elif 570 <= hm < 960:
+                                session_tag = "☀️본장"
+                            else:
+                                session_tag = "🌙애프터"
+                            if last_ts.date() > df.index[-1].date():
+                                prev = reg_curr
+                            df.iloc[-1, df.columns.get_loc('Close')] = curr
+                except Exception:
+                    pass
 
             closes = df['Close']
             opens = df['Open'] if 'Open' in df else closes
@@ -33,9 +62,8 @@ def get_quad_verified_metrics(tickers):
             lows = df['Low'] if 'Low' in df else closes
             vols = df['Volume'] if 'Volume' in df else closes * 0
 
-            curr = float(closes.iloc[-1])
-            prev = float(closes.iloc[-2]) if len(closes) >= 2 else curr
             pct = ((curr - prev) / prev) * 100 if prev > 0 else 0.0
+            ext_pct = ((curr - reg_curr) / reg_curr) * 100 if reg_curr > 0 else 0.0
 
             if len(closes) >= 15:
                 delta = closes.diff()
@@ -96,13 +124,14 @@ def get_quad_verified_metrics(tickers):
                 sig, cash = f"⏸ 중립·관망 ({score}/4)", "0원 (현금 대기)"
 
             return {
-                "curr": curr, "pct": pct, "rsi": rsi, "ma20": ma20, "disp": disp20,
+                "curr": curr, "reg_curr": reg_curr, "pct": pct, "ext_pct": ext_pct,
+                "session": session_tag, "rsi": rsi, "ma20": ma20, "disp": disp20,
                 "pct_b": pct_b, "macd_turn": macd_turn, "vol_ratio": vol_ratio,
                 "score": score, "chk": chk_str, "sig": sig, "cash": cash
             }
-        except Exception as e:
+        except Exception:
             continue
-    return {"curr": 0.0, "pct": 0.0, "rsi": 50.0, "ma20": 0.0, "disp": 0.0, "pct_b": 0.5, "macd_turn": False, "vol_ratio": 1.0, "score": 0, "chk": "[대기]", "sig": "데이터 대기", "cash": "0원"}
+    return {"curr": 0.0, "reg_curr": 0.0, "pct": 0.0, "ext_pct": 0.0, "session": "대기", "rsi": 50.0, "ma20": 0.0, "disp": 0.0, "pct_b": 0.5, "macd_turn": False, "vol_ratio": 1.0, "score": 0, "chk": "[대기]", "sig": "데이터 대기", "cash": "0원"}
 
 def calc_kr_holding(key):
     item = PORTFOLIO[key]
@@ -138,6 +167,7 @@ def main():
 
     ram_cfg = PORTFOLIO["RAM"]
     ram_p = ram["curr"] if ram["curr"] > 0 else ram_cfg["fallback_usd"]
+    ram_reg_p = ram["reg_curr"] if ram["reg_curr"] > 0 else ram_p
     ram_eval_usd = ram_p * ram_cfg["qty"]
     ram_ret = ((ram_p - ram_cfg["avg_usd"]) / ram_cfg["avg_usd"]) * 100
     ram_eval_krw = int(ram_eval_usd * krw_p)
@@ -175,7 +205,7 @@ def main():
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <meta http-equiv="refresh" content="1800">
-    <title>마스터 관제탑 V5</title>
+    <title>마스터 관제탑 V5.2 (프리·애프터장 통합)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {{ font-family: -apple-system, sans-serif; background: #0b0f19; color: #f8fafc; margin: 0; padding: 14px; max-width: 600px; margin: auto; }}
@@ -183,6 +213,7 @@ def main():
         h2 {{ font-size: 0.95rem; margin: 0 0 10px 0; padding-bottom: 6px; border-bottom: 1px solid #1e293b; color: #38bdf8; display: flex; justify-content: space-between; }}
         .row {{ display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 8px; align-items: center; }}
         .sub {{ font-size: 0.72rem; color: #94a3b8; }}
+        .badge {{ background: #334155; color: #38bdf8; padding: 2px 6px; border-radius: 4px; font-size: 0.70rem; margin-left: 4px; }}
         .sig-box {{ background: #1e293b; border-left: 4px solid #38bdf8; padding: 10px; border-radius: 6px; margin-bottom: 8px; font-size: 0.80rem; line-height: 1.45; }}
         .pos {{ color: #4ade80; font-weight: bold; }} .neg {{ color: #f87171; font-weight: bold; }} .warn {{ color: #fbbf24; font-weight: bold; }}
         .n-item {{ background: rgba(30,41,59,0.5); padding: 8px 10px; border-radius: 8px; margin-bottom: 8px; font-size: 0.82rem; }}
@@ -191,13 +222,14 @@ def main():
     </style>
 </head>
 <body>
-    <h1 style="font-size:1.2rem;text-align:center;color:#38bdf8;margin-bottom:4px;">🛡️ 마스터 투자 관제탑 V5 (4중 검증)</h1>
+    <h1 style="font-size:1.2rem;text-align:center;color:#38bdf8;margin-bottom:4px;">🛡️ 마스터 투자 관제탑 V5.2 (프리·애프터장 실시간)</h1>
     <p style="text-align:center;font-size:0.75rem;color:#94a3b8;margin-top:0;">동기화: {now_str} | 총 평가자산: <b>{total_eval_krw:,}원</b></p>
 
     <div class="card">
         <h2>🎯 1. 현금 1,000만 원 4중 교차 검증 매수 시그널</h2>
         <div class="sig-box">
-            <b>🇺🇸 마이크론(MU) / RAM</b> (MU ${mu['curr']:.2f} | RAM ${ram_p:.2f})<br>
+            <b>🇺🇸 마이크론(MU) / RAM</b> <span class="badge">{mu['session']}</span><br>
+            • 현재가: <b>MU ${mu['curr']:.2f}</b> (본장 ${mu['reg_curr']:.2f}) | <b>RAM ${ram_p:.2f}</b> (본장 ${ram_reg_p:.2f})<br>
             • RSI(14): <b>{mu['rsi']:.1f}</b> | 20일선 이격: <b>{mu['disp']:+.1f}%</b> | 볼린저 %B: <b>{mu['pct_b']:.2f}</b><br>
             • MACD 히스토그램: <b>{'반등 전환 ↑' if mu['macd_turn'] else '하락 진행 ↓'}</b> | 거래량(20일비): <b>{mu['vol_ratio']:.2f}배</b><br>
             • 검증: <span class="sub">{mu['chk']}</span><br>
@@ -218,8 +250,8 @@ def main():
     </div>
 
     <div class="card">
-        <h2>💼 3. 전 종목 실수량 · 평단가 자동 평가 현황</h2>
-        <div class="row"><span><b>RAM</b> (5,854주·$10.08)<br><span class="sub">현재 ${ram_p:.2f} ({ram['pct']:+.2f}%)</span></span><span class="{ram_color}" style="text-align:right;">{ram_ret:+.2f}%<br>${ram_eval_usd:,.0f} ({ram_eval_krw//10000:,}만)</span></div>
+        <h2>💼 3. 전 종목 실수량 · 프리/애프터 통합 평가 현황</h2>
+        <div class="row"><span><b>RAM</b> (5,854주·$10.08) <span class="badge">{ram['session']}</span><br><span class="sub">현재 ${ram_p:.2f} (본장 ${ram_reg_p:.2f} | 확장 {ram['ext_pct']:+.2f}%)</span></span><span class="{ram_color}" style="text-align:right;">{ram_ret:+.2f}%<br>${ram_eval_usd:,.0f} ({ram_eval_krw//10000:,}만)</span></div>
         <div class="row"><span><b>코스닥150레버리지</b> (3,354주·6,152원)<br><span class="sub">현재 ₩{kq['curr']:,.0f} ({kq['pct']:+.2f}%)</span></span><span class="{kq_color}" style="text-align:right;">{kq['ret_pct']:+.2f}%<br>{kq['eval_krw']:,}원</span></div>
         <div class="row"><span><b>와이지-원</b> (656주·12,910원)<br><span class="sub">현재 ₩{yg['curr']:,.0f} ({yg['pct']:+.2f}%)</span></span><span class="{yg_color}" style="text-align:right;">{yg['ret_pct']:+.2f}%<br>{yg['eval_krw']:,}원</span></div>
         <div class="row"><span><b>오름테라퓨틱(계좌1)</b> (1,097주·107,113원)<br><span class="sub">현재 ₩{or1['curr']:,.0f} ({or1['pct']:+.2f}%)</span></span><span class="{or1_color}" style="text-align:right;">{or1['ret_pct']:+.2f}%<br>{or1['eval_krw']:,}원</span></div>
@@ -251,18 +283,19 @@ def main():
         f.write(html)
 
     tg_msg = (
-        f"🛡️ <b>[마스터 관제탑 V5] 4중 교차 검증 &amp; 포트폴리오 브리핑</b>\n"
+        f"🛡️ <b>[마스터 관제탑 V5.2] 프리·애프터장 통합 브리핑</b>\n"
         f"⏰ {now_str} | 총자산: <b>{total_eval_krw//10000:,}만 원</b>\n"
         f"👉 <a href='{DASHBOARD_URL}'>터치하여 도넛 차트 &amp; 4중 검증 대시보드 열기</a>\n\n"
         f"🎯 <b>1. 현금 1,000만 원 4중 검증 시그널</b>\n"
-        f"• <b>MU/RAM</b>: RSI {mu['rsi']:.1f} | 이격 {mu['disp']:+.1f}% | %B {mu['pct_b']:.2f} | 거래량 {mu['vol_ratio']:.1f}배\n"
+        f"• <b>MU/RAM [{mu['session']}]</b>: MU ${mu['curr']:.2f} | RAM ${ram_p:.2f} (본장 ${ram_reg_p:.2f})\n"
+        f"  RSI {mu['rsi']:.1f} | 이격 {mu['disp']:+.1f}% | %B {mu['pct_b']:.2f} | 거래량 {mu['vol_ratio']:.1f}배\n"
         f"  {mu['chk']}\n"
         f"  ➔ <b>{mu['sig']} : {mu['cash']}</b>\n"
         f"• <b>코스닥레버리지</b>: RSI {kq['rsi']:.1f} | 이격 {kq['disp']:+.1f}% | %B {kq['pct_b']:.2f} | 거래량 {kq['vol_ratio']:.1f}배\n"
         f"  {kq['chk']}\n"
         f"  ➔ <b>{kq['sig']} : {kq['cash']}</b>\n\n"
         f"💼 <b>2. 보유 전 종목 실시간 평가</b>\n"
-        f"• <b>RAM (5,854주)</b>: ${ram_p:.2f} ({ram['pct']:+.2f}%) | <b>{ram_ret:+.2f}%</b> (${ram_eval_usd:,.0f})\n"
+        f"• <b>RAM (5,854주) [{ram['session']}]</b>: ${ram_p:.2f} (본장대비 {ram['ext_pct']:+.2f}%) | <b>{ram_ret:+.2f}%</b> (${ram_eval_usd:,.0f})\n"
         f"• <b>코스닥레버리지 (3,354주)</b>: ₩{kq['curr']:,.0f} ({kq['pct']:+.2f}%) | <b>{kq['ret_pct']:+.2f}%</b> ({kq['eval_krw']:,}원)\n"
         f"• <b>와이지-원 (656주)</b>: ₩{yg['curr']:,.0f} ({yg['pct']:+.2f}%) | <b>{yg['ret_pct']:+.2f}%</b> ({yg['eval_krw']:,}원)\n"
         f"• <b>오름 계좌1·2</b>: ₩{or1['curr']:,.0f} | <b>{or1['ret_pct']:+.2f}%</b> / <b>{or2['ret_pct']:+.2f}%</b>\n"
