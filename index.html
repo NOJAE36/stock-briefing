@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <meta http-equiv="refresh" content="1800">
-    <title>마스터 관제탑 V5.6</title>
+    <title>마스터 관제탑 V5.7</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #070b14; color: #f8fafc; margin: 0; padding: 12px; max-width: 600px; margin: auto; }
@@ -37,12 +37,18 @@
         .dday-cat { color: #fbbf24; font-weight: bold; font-size: 0.73rem; min-width: 66px; }
         .dday-title { color: #e2e8f0; }
         .sig-box { background: #161f33; border: 1px solid #26334d; border-left: 4px solid #38bdf8; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.80rem; }
+        .tr-box { background: #142038; border: 1px solid #2dd4bf; border-left: 4px solid #2dd4bf; padding: 12px; border-radius: 8px; margin-bottom: 10px; font-size: 0.80rem; }
+        .tr-badge { padding: 2px 6px; border-radius: 4px; font-size: 0.68rem; font-weight: bold; margin-left: 4px; }
+        .tr-sim { background: rgba(251, 191, 36, 0.18); color: #fbbf24; border: 1px solid #fbbf24; }
+        .tr-live { background: rgba(74, 222, 128, 0.18); color: #4ade80; border: 1px solid #4ade80; }
+        .tr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: #0f172a; padding: 8px; border-radius: 6px; margin-bottom: 8px; text-align: center; font-size: 0.75rem; }
+        .tr-ft { display: flex; justify-content: space-between; align-items: center; padding-top: 4px; border-top: 1px solid #26334d; font-size: 0.78rem; }
         .sig-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
         .my-ret { font-size: 0.78rem; background: #0f172a; padding: 2px 7px; border-radius: 4px; }
         .bar-bg { width: 100%; height: 5px; background: #0f172a; border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
         .bar-fill { height: 100%; border-radius: 3px; }
         .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: #0f172a; padding: 6px; border-radius: 6px; margin-bottom: 8px; text-align: center; font-size: 0.75rem; }
-        .m-cell { line-height: 1.3; }
+        .m-cell { line-height: 1.35; }
         .pill-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 8px; text-align: center; }
         .pill { padding: 4px 2px; border-radius: 5px; font-size: 0.70rem; font-weight: 700; }
         .pill-on { background: rgba(74, 222, 128, 0.18); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.5); }
@@ -56,30 +62,30 @@
 </head>
 <body>
     <div class="top-hd">
-        <div class="top-title">🛡️ 마스터 관제탑 V5.6</div>
-        <div class="top-sync">동기화: 2026-11-12 20:21 KST (환율 ₩1,332.0)</div>
+        <div class="top-title">🛡️ 마스터 관제탑 V5.7</div>
+        <div class="top-sync">동기화: 2026-11-12 20:58 KST (환율 ₩1,332.5)</div>
     </div>
 
     <div class="kpi-grid">
         <div class="kpi-box">
-            <div class="kpi-lbl">총 평가자산 (현금포함)</div>
-            <div class="kpi-val" style="color:#38bdf8;">10,478만 원</div>
-            <div class="kpi-sub">총 원금 27,342만 원</div>
+            <div class="kpi-lbl">총 평가자산 (1차목표 15,131만)</div>
+            <div class="kpi-val" style="color:#38bdf8;">10,472만 원</div>
+            <div class="kpi-sub">1차 전환선까지 4,659만 원</div>
         </div>
         <div class="kpi-box">
             <div class="kpi-lbl">원화 환산 총 평가손익</div>
-            <div class="kpi-val neg">-16,865만 원</div>
-            <div class="kpi-sub">-168,641,133원</div>
+            <div class="kpi-val neg">-16,874만 원</div>
+            <div class="kpi-sub">-168,730,516원</div>
         </div>
         <div class="kpi-box">
             <div class="kpi-lbl">보유 주식 합산 수익률</div>
-            <div class="kpi-val neg">-64.02%</div>
-            <div class="kpi-sub">현금포함 총자산 -61.68%</div>
+            <div class="kpi-val neg">-64.04%</div>
+            <div class="kpi-sub">현금포함 총자산 -61.70%</div>
         </div>
         <div class="kpi-box">
-            <div class="kpi-lbl">주식 평가액 / 대기 현금</div>
-            <div class="kpi-val">9,478만 / <span style="color:#4ade80;">1,000만</span></div>
-            <div class="kpi-sub">주식 원금 26,342만 원</div>
+            <div class="kpi-lbl">주식 평가액 / 잔여 현금</div>
+            <div class="kpi-val">9,472만 / <span style="color:#4ade80;">1,000만</span></div>
+            <div class="kpi-sub">YG1 교체 시 전략시드 1,644만</div>
         </div>
     </div>
 
@@ -113,6 +119,41 @@
     </div>
 
     <div class="card">
+        <h2>🛡️ 신규 스윙 트랑셰 자동 익절·스탑 계산기 (장부분리)</h2>
+        
+                <div class="tr-box">
+                    <div class="sig-hd">
+                        <div><b>RAM 엔비디아실적 1차</b> (600주) <span class="tr-badge tr-sim">🧪 모의 프리뷰 (SIM)</span></div>
+                        <div class="neg">-0.32%</div>
+                    </div>
+                    <div class="tr-grid">
+                        <div class="m-cell"><span class="sub">진입단가 / 현재가</span><br><b>$6.20</b> ➔ <b>$6.18</b></div>
+                        <div class="m-cell"><span class="sub">🎯 목표익절 (+15%)</span><br><b class="pos">$7.13</b></div>
+                        <div class="m-cell"><span class="sub">🛡️ 스탑단가 (-7%)</span><br><b class="neg">$5.77</b> <span class="sub">(고점 $6.20)</span></div>
+                    </div>
+                    <div class="tr-ft">
+                        <span>트랑셰 단독 손익: <b class="neg">-12달러 (-2만 원)</b> (원금 495만)</span>
+                    </div>
+                    <div class="sub" style="margin-top:4px;">💡 MTS 합산 시 6,454주 · 합산평단 $9.72 (기존 $10.08) | 진입가 $6.20 체결 가정 시 실시간 시뮬레이션</div>
+                </div>
+                <div class="tr-box">
+                    <div class="sig-hd">
+                        <div><b>코스닥레버리지 눌림 1차</b> (850주) <span class="tr-badge tr-sim">🧪 모의 프리뷰 (SIM)</span></div>
+                        <div class="pos">+4.88%</div>
+                    </div>
+                    <div class="tr-grid">
+                        <div class="m-cell"><span class="sub">진입단가 / 현재가</span><br><b>₩4,100</b> ➔ <b>₩4,300</b></div>
+                        <div class="m-cell"><span class="sub">🎯 목표익절 (+12%)</span><br><b class="pos">₩4,592</b></div>
+                        <div class="m-cell"><span class="sub">🛡️ 스탑단가 (-6%)</span><br><b class="neg">₩4,042</b> <span class="sub">(고점 ₩4,300)</span></div>
+                    </div>
+                    <div class="tr-ft">
+                        <span>트랑셰 단독 손익: <b class="pos">+170,000원 (+17만 원)</b> (원금 348만)</span>
+                    </div>
+                    <div class="sub" style="margin-top:4px;">💡 MTS 합산 시 4,204주 · 합산평단 ₩5,737 (기존 ₩6,152) | 진입가 ₩4,100 체결 가정 시 실시간 시뮬레이션</div>
+                </div>
+    </div>
+
+    <div class="card">
         <h2>📅 핵심 일정 D-Day 트래커</h2>
         <div class="dday-row"><span class="dday-tag dday-urgent">D-6</span><span class="dday-cat">🔥AI·DRAM</span><span class="dday-title">엔비디아(NVDA) FY27 3Q 실적발표 (HBM 수요 풍향계) <span class="sub">(11-18)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-28</span><span class="dday-cat">🏦매크로</span><span class="dday-title">미국 12월 FOMC 금리결정 및 점도표 발표 <span class="sub">(12-10)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-30</span><span class="dday-cat">🧬바이오</span><span class="dday-title">미국 혈액암학회(ASH 2026) 개막 (오름·앱클론 모멘텀) <span class="sub">(12-12)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-35</span><span class="dday-cat">💾DRAM</span><span class="dday-title">마이크론(MU) FY27 1Q 실적발표 (RAM 직접 모멘텀) <span class="sub">(12-17)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-57</span><span class="dday-cat">💾DRAM</span><span class="dday-title">삼성전자 2026 4Q 잠정실적 발표 (메모리 마진 확인) <span class="sub">(01-08)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-60</span><span class="dday-cat">🧬바이오</span><span class="dday-title">2027 JP모건 헬스케어 컨퍼런스 (글로벌 기술이전 시즌) <span class="sub">(01-11)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-71</span><span class="dday-cat">💾DRAM</span><span class="dday-title">SK하이닉스 2026 4Q 실적발표 (HBM3E·HBM4 가이던스) <span class="sub">(01-22)</span></span></div>
     </div>
@@ -122,13 +163,13 @@
         
         <div class="sig-box" style="border-left-color:#38bdf8;">
             <div class="sig-hd">
-                <div><b>🇺🇸 RAM (DRAM 2X ETF)</b> <span class="badge">🌅프리장</span> <span class="sub">$6.19 (-6.64%)</span></div>
-                <div class="my-ret"><span class="neg">수익 -38.6%</span></div>
+                <div><b>🇺🇸 RAM (DRAM 2X ETF)</b> <span class="badge">🌅프리장</span> <span class="sub">$6.18 (-6.79%)</span></div>
+                <div class="my-ret"><span class="neg">기존 -38.7%</span></div>
             </div>
             <div class="bar-bg"><div class="bar-fill" style="width:50%;background:#38bdf8;"></div></div>
             <div class="metric-grid">
                 <div class="m-cell"><span class="sub">RSI(14)</span><br><b>38.5</b> <span class="sub">(기준 35)</span></div>
-                <div class="m-cell"><span class="sub">20일 이격도</span><br><b>-19.9%</b> <span class="sub">(-9%)</span></div>
+                <div class="m-cell"><span class="sub">20일 이격도</span><br><b>-20.1%</b> <span class="sub">(-9%)</span></div>
                 <div class="m-cell"><span class="sub">볼린저 %B</span><br><b>0.25</b></div>
                 <div class="m-cell"><span class="sub">거래량(20일)</span><br><b>1.5배</b></div>
             </div>
@@ -146,7 +187,7 @@
         <div class="sig-box" style="border-left-color:#f87171;">
             <div class="sig-hd">
                 <div><b>🇰🇷 KODEX 코스닥150레버리지</b> <span class="sub">₩4,300 (-3.15%)</span></div>
-                <div class="my-ret"><span class="neg">수익 -30.1%</span></div>
+                <div class="my-ret"><span class="neg">기존 -30.1%</span></div>
             </div>
             <div class="bar-bg"><div class="bar-fill" style="width:50%;background:#38bdf8;"></div></div>
             <div class="metric-grid">
@@ -168,8 +209,8 @@
         </div>
         <div class="sig-box" style="border-left-color:#fbbf24;">
             <div class="sig-hd">
-                <div><b>🔧 와이지-원</b> <span class="sub">₩9,820 (-2.09%)</span></div>
-                <div class="my-ret"><span class="neg">수익 -23.9%</span></div>
+                <div><b>🔧 와이지-원 (시드교체 대상)</b> <span class="sub">₩9,820 (-2.09%)</span></div>
+                <div class="my-ret"><span class="neg">기존 -23.9%</span></div>
             </div>
             <div class="bar-bg"><div class="bar-fill" style="width:50%;background:#38bdf8;"></div></div>
             <div class="metric-grid">
@@ -215,7 +256,7 @@
         <div class="sig-box" style="border-left-color:#4ade80;">
             <div class="sig-hd">
                 <div><b>🧬 앱클론</b> <span class="sub">₩21,850 (-3.32%)</span></div>
-                <div class="my-ret"><span class="neg">수익 -58.6%</span></div>
+                <div class="my-ret"><span class="neg">기존 -58.6%</span></div>
             </div>
             <div class="bar-bg"><div class="bar-fill" style="width:25%;background:#38bdf8;"></div></div>
             <div class="metric-grid">
@@ -238,14 +279,9 @@
     </div>
 
     <div class="card">
-        <h2>🛡️ 신규 진입 물량 트레일링 스탑 감시</h2>
-        <div class="sub">현재 가용 현금으로 신규 진입한 단기 스윙 물량이 없습니다. (기존 보유 물량은 트레일링 스탑 제외)</div>
-    </div>
-
-    <div class="card">
-        <h2>💼 보유 종목 상세 평가 & 포트폴리오 비중</h2>
+        <h2>💼 기존 보유 종목 상세 평가 & 포트폴리오 비중</h2>
         <div style="width:210px;margin:0 auto 12px auto;"><canvas id="pfChart"></canvas></div>
-        <div class="row"><span><b>RAM</b> (5,854주 · 평단 $10.08) <span class="badge">🌅프리장</span><br><span class="sub">현재 $6.19 (본장 $6.63 | 확장 -6.64%)</span></span><span class="neg" style="text-align:right;">-38.58% (-3,032만)<br>$36,236 (4,826만)</span></div>
+        <div class="row"><span><b>RAM</b> (5,854주 · 평단 $10.08) <span class="badge">🌅프리장</span><br><span class="sub">현재 $6.18 (본장 $6.63 | 확장 -6.79%)</span></span><span class="neg" style="text-align:right;">-38.68% (-3,041만)<br>$36,178 (4,820만)</span></div>
         <div class="row"><span><b>코스닥150레버리지</b> (3,354주 · 평단 6,152원)<br><span class="sub">현재 ₩4,300 (-3.15%)</span></span><span class="neg" style="text-align:right;">-30.10% (-622만)<br>14,422,200원</span></div>
         <div class="row"><span><b>와이지-원</b> (656주 · 평단 12,910원)<br><span class="sub">현재 ₩9,820 (-2.09%)</span></span><span class="neg" style="text-align:right;">-23.93% (-203만)<br>6,441,920원</span></div>
         <div class="row"><span><b>오름테라퓨틱(계좌1)</b> (1,097주 · 평단 107,113원)<br><span class="sub">현재 ₩14,830 (-0.20%)</span></span><span class="neg" style="text-align:right;">-86.15% (-10,124만)<br>16,268,510원</span></div>
@@ -253,7 +289,7 @@
         <div class="row"><span><b>앱클론</b> (256주 · 평단 52,735원)<br><span class="sub">현재 ₩21,850 (-3.32%)</span></span><span class="neg" style="text-align:right;">-58.57% (-791만)<br>5,593,600원</span></div>
     </div>
 
-    <div class="card"><h2>📰 최근 48시간 최신 속보</h2><div class="n-item"><div class="n-hd"><span class="tag">[반도체/DRAM]</span><span class="meta">11/12 18:34 | 뉴스핌</span></div><a href="https://news.google.com/rss/articles/CBMiXEFVX3lxTE5YZEZEM0lnd3hQYmtKSk5Qd0gyYV9Nc0FaNHRfZTVzWnZ1dS1jRVFHUExOTFB4MVE2MXZxWWFsclNWb012bHltVk4xWGxDZU0xeGt6eWlPNGVkQnlx?oc=5" target="_blank">젠슨 황 논란 확산일로…삼성전자·SK하이닉스, 실적 변수</a></div><div class="n-item"><div class="n-hd"><span class="tag">[반도체/DRAM]</span><span class="meta">11/12 12:31 | 디일렉</span></div><a href="https://news.google.com/rss/articles/CBMiZkFVX3lxTE1lZ0hkTlhnVUZBSHU2ekZjZFJqQldDVEJqbWxVUVRDMEtrQTFCTk5BUG5ERkZuNWwwVVV1RlF1UFdERUZQbE9xY2tNOTVpaWxROUdESXc3cTlnZ1ZZYzNQbnItWDhZZw?oc=5" target="_blank">삼성, 충청권 144조 투자 본격화…HBM·OLED·반도체 기판 증설</a></div><div class="n-item"><div class="n-hd"><span class="tag">[매크로/코스닥]</span><span class="meta">11/11 17:47 | 한양경제</span></div><a href="https://news.google.com/rss/articles/CBMickFVX3lxTE15RmxGSHVIeGpZTXdRRERKbmRqVW9vN2FqUWJtTmN1MjFzVGhHNlpNOVFCc1I3OXJGeFFTOXppakFmZFNYeWs1T09PX2tuOVUxYXMxeHgyakYxUjdZOVJFek41VGJ3T1hpbmxDbFB2Um53UQ?oc=5" target="_blank">[마감시황] 코스피, 금리 인상 우려 딛고 5300선 탈환…코스닥 5.62% 급등</a></div><div class="n-item"><div class="n-hd"><span class="tag">[매크로/코스닥]</span><span class="meta">11/11 17:05 | https://www.theconnectmoney.com/</span></div><a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE00Z3NZMW9XZnlHX0RveUxzdUV2LUFqSXh4Y2I4c0xVMi05OEhpLWFTLVFDZlRfSWQ3ZkZjc1dnazhOWllRRUlIVmtkR0pweHFERTFvdU5lUFBkX3lZX3M3dg?oc=5" target="_blank">미국은 물가 충격에 하락했는데… 코스피 2.60%·코스닥 5.62% 동반 급등</a></div><div class="n-item"><div class="n-hd"><span class="tag">[바이오]</span><span class="meta">11/12 12:00 | 메디코파마</span></div><a href="https://news.google.com/rss/articles/CBMickFVX3lxTE1pTjlfZ3ZoODRvSWdjZGh2emgzbHRURWZNVWl6LTR2Ny14VTAwQ1NrTmtLRmk4Rm95TUdkTzBQUXlIMmxnVi1DQVJnZTM2dzdSaW4yenloLS1SbXZ1TDlQem9PZjEydXk3WTR6alFEWGUxdw?oc=5" target="_blank">앱클론 'HLX22', 글로벌 3상 도전…키트루다 없이 위암 잡는다</a></div><div class="n-item"><div class="n-hd"><span class="tag">[바이오]</span><span class="meta">11/11 09:36 | 바이오스펙테이터</span></div><a href="https://news.google.com/rss/articles/CBMiV0FVX3lxTFBLNEZ2YlVmcTQxVm1Yb0dSblp4a0ZVX3lKTkNKQkpVSk5LMm5DQVBWZGI0UnRVSHZUWjF5YWtEWnNRVGN3MkRicFpQU0NVZnItaWFFZ1doSQ?oc=5" target="_blank">앱클론, 'CD19 CAR-T' 유럽특허 등록.."주요 8개국 완료"</a></div></div>
+    <div class="card"><h2>📰 최근 48시간 최신 속보</h2><div class="n-item"><div class="n-hd"><span class="tag">[반도체/DRAM]</span><span class="meta">11/11 11:02 | www.ebn.co.kr</span></div><a href="https://news.google.com/rss/articles/CBMiaEFVX3lxTE5BODNNQ0VNNzNzbXRQVlF1MEhHSzlJbWxnMERZakZfSElWSnhQaDdfRUZiampNVXVKNGdvVllQRG9VVm80QlpJQTFFWFlnRGVkYm8zVWF5Yzhjd044bXVhWU40by1lYmpD?oc=5" target="_blank">[젠슨 황 리스크] 엔비디아發 HBM 공급망 변수…삼전닉스 셈법 복잡</a></div><div class="n-item"><div class="n-hd"><span class="tag">[반도체/DRAM]</span><span class="meta">11/11 16:10 | 신아일보</span></div><a href="https://news.google.com/rss/articles/CBMicEFVX3lxTE0zekFGY0c0MVI1cXdJR0JBM1FDbmtySHJrRGVua2hNY1Q2UVlBVHNfUG9EZG1uMVBRTkIxMFVDenN3dVY3Q3AwMk1GcFhlY2FfLUprNGZtenZKVlhHdVRtb3BfOWhvcnlyWG1ZWlFRekY?oc=5" target="_blank">'젠슨황 스캔들' 삼전닉스, HBM 공급 차질 없다…"공급망 다변화 기회"</a></div><div class="n-item"><div class="n-hd"><span class="tag">[매크로/코스닥]</span><span class="meta">11/11 17:47 | 한양경제</span></div><a href="https://news.google.com/rss/articles/CBMickFVX3lxTE15RmxGSHVIeGpZTXdRRERKbmRqVW9vN2FqUWJtTmN1MjFzVGhHNlpNOVFCc1I3OXJGeFFTOXppakFmZFNYeWs1T09PX2tuOVUxYXMxeHgyakYxUjdZOVJFek41VGJ3T1hpbmxDbFB2Um53UQ?oc=5" target="_blank">[마감시황] 코스피, 금리 인상 우려 딛고 5300선 탈환…코스닥 5.62% 급등</a></div><div class="n-item"><div class="n-hd"><span class="tag">[매크로/코스닥]</span><span class="meta">11/11 17:05 | https://www.theconnectmoney.com/</span></div><a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE00Z3NZMW9XZnlHX0RveUxzdUV2LUFqSXh4Y2I4c0xVMi05OEhpLWFTLVFDZlRfSWQ3ZkZjc1dnazhOWllRRUlIVmtkR0pweHFERTFvdU5lUFBkX3lZX3M3dg?oc=5" target="_blank">미국은 물가 충격에 하락했는데… 코스피 2.60%·코스닥 5.62% 동반 급등</a></div><div class="n-item"><div class="n-hd"><span class="tag">[바이오]</span><span class="meta">11/12 12:00 | 메디코파마</span></div><a href="https://news.google.com/rss/articles/CBMickFVX3lxTE1pTjlfZ3ZoODRvSWdjZGh2emgzbHRURWZNVWl6LTR2Ny14VTAwQ1NrTmtLRmk4Rm95TUdkTzBQUXlIMmxnVi1DQVJnZTM2dzdSaW4yenloLS1SbXZ1TDlQem9PZjEydXk3WTR6alFEWGUxdw?oc=5" target="_blank">앱클론 'HLX22', 글로벌 3상 도전…키트루다 없이 위암 잡는다</a></div><div class="n-item"><div class="n-hd"><span class="tag">[바이오]</span><span class="meta">11/11 09:36 | 바이오스펙테이터</span></div><a href="https://news.google.com/rss/articles/CBMiV0FVX3lxTFBLNEZ2YlVmcTQxVm1Yb0dSblp4a0ZVX3lKTkNKQkpVSk5LMm5DQVBWZGI0UnRVSHZUWjF5YWtEWnNRVGN3MkRicFpQU0NVZnItaWFFZ1doSQ?oc=5" target="_blank">앱클론, 'CD19 CAR-T' 유럽특허 등록.."주요 8개국 완료"</a></div></div>
 
     <script>
         new Chart(document.getElementById('pfChart'), {
@@ -261,7 +297,7 @@
             data: {
                 labels: ['RAM(반도체)', '바이오(오름·앱클론)', '코스닥150레버리지', '가용현금', '와이지-원'],
                 datasets: [{
-                    data: [4826, 2565, 1442, 1000, 644],
+                    data: [4820, 2565, 1442, 1000, 644],
                     backgroundColor: ['#38bdf8', '#c084fc', '#f87171', '#4ade80', '#fbbf24'],
                     borderWidth: 0
                 }]
