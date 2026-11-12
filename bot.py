@@ -12,9 +12,9 @@ QUIET_NIGHT_MODE = True
 CACHE_BUST = datetime.datetime.now().strftime("%m%d%H%M")
 DASHBOARD_URL = f"https://{GITHUB_REPO.split('/')[0]}.github.io/{GITHUB_REPO.split('/')[1]}/?v={CACHE_BUST}" if '/' in GITHUB_REPO else f"https://nojae36.github.io/stock-briefing/?v={CACHE_BUST}"
 
-# [1] 기존 보유 포트폴리오 (본전 회복 및 구조적 홀딩 물량)
+# [1] 기존 코어 보유 포트폴리오 (기존 RAM 5,854주와 신규 LIVE 606주가 합산되어 MTS 6,460주 평단 $9.6926 자동 산출)
 PORTFOLIO = {
-    "RAM": {"name": "RAM (DRAM 2X)", "symbol": "RAM", "avg_usd": 10.0779, "qty": 5854, "fallback_usd": 6.63},
+    "RAM": {"name": "RAM (DRAM 2X)", "symbol": "RAM", "avg_usd": 10.0779, "qty": 5854, "fallback_usd": 5.97},
     "KODEX_LEV": {"name": "코스닥150레버리지", "tickers": ["233740.KS"], "avg_krw": 6152, "qty": 3354, "fallback_krw": 4300},
     "YG1": {"name": "와이지-원", "tickers": ["019210.KQ", "019210.KS"], "avg_krw": 12910, "qty": 656, "fallback_krw": 9820},
     "ORUM1": {"name": "오름테라퓨틱(계좌1)", "tickers": ["475830.KQ", "475830.KS"], "avg_krw": 107113, "qty": 1097, "fallback_krw": 14830},
@@ -32,19 +32,17 @@ CUSTOM_PARAMS = {
     "ABCLON": {"rsi_cut": 32.0, "disp_cut": -11.0}
 }
 
-# [3] 기존 계좌 내 신규 스윙 물량(트랑셰) 자동 계산 리스트
-# - mode가 "SIM"이면 매수 전 타점 시뮬레이션 프리뷰로 표시됩니다 (총자산/현금 차감 안 됨).
-# - 실제 매수 체결 후 mode를 "LIVE"로 바꾸고 entry_date, entry_price, qty를 실제 값으로 수정하면 실전 감시 및 현금 자동 차감이 작동합니다.
+# [3] 신규 스윙 물량(트랑셰) 자동 계산 리스트 (RAM 606주 $5.97 실전 LIVE 반영 완료)
 NEW_TRANCHES = [
     {
-        "mode": "SIM",
+        "mode": "LIVE",
         "name": "RAM 엔비디아실적 1차",
         "symbol": "RAM",
         "base_key": "RAM",
         "currency": "USD",
-        "entry_date": "2026-11-13",
-        "entry_price": 6.20,
-        "qty": 600,
+        "entry_date": "2026-11-12",
+        "entry_price": 5.97,
+        "qty": 606,
         "target_pct": 15.0,
         "trail_pct": -7.0
     },
@@ -190,18 +188,18 @@ def get_quad_verified_metrics(tickers, rsi_cut=35.0, disp_cut=-9.0, is_core_cash
             is_buy_alert = False
             if c1_oversold and score == 4:
                 sig, short_st = f"🔥 4중검증 완벽타점 ({score}/4)", "🔥진바닥"
-                cash = "신규 트랑셰 500만 원 투입" if is_core_cash_target else "진바닥 강세 전환 (분할 추매)"
+                cash = "잔여 시드 517만 원 투입 검토" if is_core_cash_target else "진바닥 강세 전환 (분할 추매)"
                 is_buy_alert = True
             elif c1_oversold and score == 3 and (c3_momentum or c4_volume):
                 sig, short_st = f"✅ 1차 검증타점 ({score}/4)", "✅타점진입"
                 cash = "신규 트랑셰 350만 원 투입" if is_core_cash_target else "단기 반등 타점 (소액 스윙)"
                 is_buy_alert = True
             elif c1_oversold and score <= 2:
-                sig, short_st, cash = f"⚠️ 하락칼날 주의 ({score}/4)", "⚠️칼날주의", "0원 대기 (반등 미확인)"
+                sig, short_st, cash = f"⚠️ 하락칼날 주의 ({score}/4)", "⚠️칼날주의", "추가매수 대기 (반등 미확인)"
             elif rsi > 72:
-                sig, short_st, cash = f"🚨 단기 과열 ({score}/4)", "🚨과열주의", "신규 익절 & 기존분 25% 역물타기"
+                sig, short_st, cash = f"🚨 단기 과열 ({score}/4)", "🚨과열주의", "신규 606주 익절 & 기존분 역물타기"
             else:
-                sig, short_st, cash = f"⏸ 중립·관망 ({score}/4)", "⏸관망중", "기존 물량 홀딩 · 현금 대기"
+                sig, short_st, cash = f"⏸ 중립·관망 ({score}/4)", "⏸관망중", "1차 606주 스윙 감시 · 잔여현금 대기"
 
             return {
                 "curr": curr, "reg_curr": reg_curr, "pct": pct, "ext_pct": ext_pct,
@@ -255,7 +253,6 @@ def evaluate_new_tranches(price_map, krw_rate):
             stop_p = peak_p * (1.0 + trail_pct / 100.0)
 
             ret_entry = ((curr_p - entry_p) / entry_p) * 100.0 if entry_p > 0 else 0.0
-            ret_peak = ((curr_p - peak_p) / peak_p) * 100.0 if peak_p > 0 else 0.0
 
             if is_usd:
                 cost_usd = entry_p * qty
@@ -265,19 +262,20 @@ def evaluate_new_tranches(price_map, krw_rate):
                 eval_krw = int(eval_usd * krw_rate)
                 pnl_krw = eval_krw - cost_krw
                 p_fmt = lambda x: f"${x:,.2f}"
-                pnl_str = f"{pnl_usd:+,.0f}달러 ({pnl_krw//10000:+,}만 원)"
+                avg_fmt = lambda x: f"${x:,.4f}"
+                pnl_str = f"{pnl_usd:+,.1f}달러 ({pnl_krw//10000:+,}만 원)"
             else:
                 cost_krw = int(entry_p * qty)
                 eval_krw = int(curr_p * qty)
                 pnl_krw = eval_krw - cost_krw
                 p_fmt = lambda x: f"₩{x:,.0f}"
+                avg_fmt = lambda x: f"₩{x:,.0f}"
                 pnl_str = f"{pnl_krw:+,}원 ({pnl_krw//10000:+,}만 원)"
 
             if is_live:
                 live_cost_krw += cost_krw
                 live_eval_krw += eval_krw
 
-            # 기존 계좌 합산 시 증권사 MTS에 표시될 예상 합산 평단가 계산
             base_key = tr.get("base_key", "")
             blended_note = ""
             if base_key in PORTFOLIO:
@@ -286,19 +284,19 @@ def evaluate_new_tranches(price_map, krw_rate):
                 b_avg = b_item.get("avg_usd", b_item.get("avg_krw", 0))
                 new_total_qty = b_qty + qty
                 blended_avg = ((b_avg * b_qty) + (entry_p * qty)) / new_total_qty
-                blended_note = f"MTS 합산 시 {new_total_qty:,}주 · 합산평단 {p_fmt(blended_avg)} (기존 {p_fmt(b_avg)})"
+                blended_note = f"MTS 합산 {new_total_qty:,}주 · 평단 {avg_fmt(blended_avg)}"
 
             if not is_live:
                 badge_html = '<span class="tr-badge tr-sim">🧪 모의 프리뷰 (SIM)</span>'
-                status_str = f"진입가 {p_fmt(entry_p)} 체결 가정 시 실시간 시뮬레이션"
+                status_str = f"진입가 {p_fmt(entry_p)} 체결 가정 시뮬레이션"
             else:
                 badge_html = '<span class="tr-badge tr-live">🟢 실전 감시 중 (LIVE)</span>'
-                status_str = "🟢 스윙 보유 중 (트레일링 스탑 감시)"
+                status_str = "🟢 스윙 보유 중 (고점 대비 -7% 스탑 자동 추적)"
                 if curr_p <= stop_p:
-                    status_str = f"🚨 트레일링 스탑 도달! ({p_fmt(stop_p)} 이하 전량 매도)"
+                    status_str = f"🚨 트레일링 스탑 도달! ({p_fmt(stop_p)} 이하 매도)"
                     exit_alert = True
                 elif curr_p >= target_p:
-                    status_str = f"🎯 목표 익절가 도달! ({p_fmt(target_p)} 절반 익절)"
+                    status_str = f"🎯 목표 익절가 도달! ({p_fmt(target_p)} 익절 실행)"
                     exit_alert = True
 
             ret_cls = "pos" if ret_entry >= 0 else "neg"
@@ -314,14 +312,14 @@ def evaluate_new_tranches(price_map, krw_rate):
                         <div class="m-cell"><span class="sub">🛡️ 스탑단가 ({trail_pct:+.0f}%)</span><br><b class="neg">{p_fmt(stop_p)}</b> <span class="sub">(고점 {p_fmt(peak_p)})</span></div>
                     </div>
                     <div class="tr-ft">
-                        <span>트랑셰 단독 손익: <b class="{ret_cls}">{pnl_str}</b> (원금 {cost_krw//10000:,}만)</span>
+                        <span>트랑셰 단독 손익: <b class="{ret_cls}">{pnl_str}</b> (투입원금 {cost_krw//10000:,}만)</span>
                     </div>
                     <div class="sub" style="margin-top:4px;">💡 {blended_note} | {status_str}</div>
                 </div>""")
 
-            mode_tag = "[실전]" if is_live else "[프리뷰]"
+            mode_tag = "[실전LIVE]" if is_live else "[프리뷰]"
             tg_rows.append(
-                f"• <b>{mode_tag} {tr['name']} ({qty:,}주)</b>: 진입 {p_fmt(entry_p)} ➔ 현재 {p_fmt(curr_p)} (<b>{ret_entry:+.1f}%</b> / {pnl_krw//10000:+,}만)\n"
+                f"• <b>{mode_tag} {tr['name']} ({qty:,}주)</b>: 진입 {p_fmt(entry_p)} ➔ 현재 {p_fmt(curr_p)} (<b>{ret_entry:+.2f}%</b> / {pnl_krw//10000:+,}만)\n"
                 f"  🎯익절가 <b>{p_fmt(target_p)}</b> | 🛡️스탑가 <b>{p_fmt(stop_p)}</b> | {blended_note}"
             )
         except Exception:
@@ -418,7 +416,7 @@ def main():
     ram_param = CUSTOM_PARAMS["RAM"]
     ram = get_quad_verified_metrics("RAM", rsi_cut=ram_param["rsi_cut"], disp_cut=ram_param["disp_cut"], is_core_cash_target=True)
     krw = get_quad_verified_metrics("KRW=X", is_core_cash_target=False)
-    krw_p = krw["curr"] if krw["curr"] > 0 else 1333.0
+    krw_p = krw["curr"] if krw["curr"] > 0 else 1334.3
 
     ram_cfg = PORTFOLIO["RAM"]
     ram_p = ram["curr"] if ram["curr"] > 0 else ram_cfg["fallback_usd"]
@@ -429,6 +427,11 @@ def main():
     ram_cost_krw = int(ram_cost_usd * krw_p)
     ram_eval_krw = int(ram_eval_usd * krw_p)
     ram_pnl_krw = ram_eval_krw - ram_cost_krw
+
+    # MTS 합산 RAM 전체 수치 (6,460주 · 평단 $9.6926)
+    ram_total_qty = ram_cfg["qty"] + 606
+    ram_total_avg = 9.6926
+    ram_total_ret = ((ram_p - ram_total_avg) / ram_total_avg) * 100
 
     kq = calc_kr_holding("KODEX_LEV", "KODEX_LEV", is_core=True)
     yg = calc_kr_holding("YG1", "YG1", is_core=False)
@@ -445,7 +448,6 @@ def main():
     }
     tranche_html, tranche_tg, tranche_alert, live_tr_cost, live_tr_eval, live_tr_pnl = evaluate_new_tranches(price_map, krw_p)
 
-    # LIVE 트랑셰 매수 원금만큼 대기 현금에서 자동 차감 반영
     base_cash = PORTFOLIO["CASH"]["eval_krw"]
     rem_cash_eval = max(0, base_cash - live_tr_cost)
 
@@ -458,6 +460,7 @@ def main():
     total_eval_krw = stock_eval_krw + rem_cash_eval
     total_asset_ret_pct = ((total_eval_krw - total_cost_krw) / total_cost_krw) * 100.0 if total_cost_krw > 0 else 0.0
     bio_eval_krw = or1["eval_krw"] + or2["eval_krw"] + ab["eval_krw"]
+    ram_combined_eval_krw = ram_eval_krw + live_tr_eval
 
     news = (get_latest_strict_news("엔비디아 실적 OR 마이크론 OR 삼성전자 HBM", "[반도체/DRAM]", 2) +
             get_latest_strict_news("코스닥 수급 OR 미국 금리 환율", "[매크로/코스닥]", 2) +
@@ -468,7 +471,7 @@ def main():
     news_tg = "\n".join([f"• {x['tag']} <a href='{x['link']}'>{x['title']}</a> ({x['source']} {x['time']})" for x in news]) or "• 최근 48시간 내 속보 없음"
 
     pnl_color = "pos" if total_pnl_krw >= 0 else "neg"
-    ram_color = "pos" if ram_ret >= 0 else "neg"
+    ram_color = "pos" if ram_total_ret >= 0 else "neg"
     kq_color = "pos" if kq['ret_pct'] >= 0 else "neg"
     yg_color = "pos" if yg['ret_pct'] >= 0 else "neg"
     or1_color = "pos" if or1['ret_pct'] >= 0 else "neg"
@@ -485,9 +488,9 @@ def main():
 
     sig_cards_html = (
         render_sig_card(
-            "🇺🇸 RAM (DRAM 2X ETF)",
+            "🇺🇸 RAM (총 6,460주 · $9.6926)",
             f'<span class="badge">{ram["session"]}</span> <span class="sub">${ram_p:.2f} ({ram["pct"]:+.2f}%)</span>',
-            f'<span class="{ram_color}">기존 {ram_ret:+.1f}%</span>',
+            f'<span class="{ram_color}">합산 {ram_total_ret:+.1f}%</span>',
             ram, "#38bdf8"
         ) +
         render_sig_card(
@@ -603,7 +606,7 @@ def main():
         <div class="kpi-box">
             <div class="kpi-lbl">주식 평가액 / 잔여 현금</div>
             <div class="kpi-val">{stock_eval_krw//10000:,}만 / <span style="color:#4ade80;">{rem_cash_eval//10000:,}만</span></div>
-            <div class="kpi-sub">YG1 교체 시 전략시드 1,644만</div>
+            <div class="kpi-sub">RAM 1차(483만) 실전 투입 완료</div>
         </div>
     </div>
 
@@ -627,9 +630,9 @@ def main():
     </div>
 
     <div class="card">
-        <h2>💼 기존 보유 종목 상세 평가 & 포트폴리오 비중</h2>
+        <h2>💼 보유 종목 상세 평가 & 포트폴리오 비중</h2>
         <div style="width:210px;margin:0 auto 12px auto;"><canvas id="pfChart"></canvas></div>
-        <div class="row"><span><b>RAM</b> (5,854주 · 평단 $10.08) <span class="badge">{ram['session']}</span><br><span class="sub">현재 ${ram_p:.2f} (본장 ${ram_reg_p:.2f} | 확장 {ram['ext_pct']:+.2f}%)</span></span><span class="{ram_color}" style="text-align:right;">{ram_ret:+.2f}% ({ram_pnl_krw//10000:+,}만)<br>${ram_eval_usd:,.0f} ({ram_eval_krw//10000:,}만)</span></div>
+        <div class="row"><span><b>RAM 합산</b> (6,460주 · 평단 $9.6926) <span class="badge">{ram['session']}</span><br><span class="sub">기존 5,854주($10.08) + 신규 606주($5.97) | 현재 ${ram_p:.2f}</span></span><span class="{ram_color}" style="text-align:right;">{ram_total_ret:+.2f}% ({(ram_pnl_krw + live_tr_pnl)//10000:+,}만)<br>${ram_p * ram_total_qty:,.0f} ({ram_combined_eval_krw//10000:,}만)</span></div>
         <div class="row"><span><b>코스닥150레버리지</b> (3,354주 · 평단 6,152원)<br><span class="sub">현재 ₩{kq['curr']:,.0f} ({kq['pct']:+.2f}%)</span></span><span class="{kq_color}" style="text-align:right;">{kq['ret_pct']:+.2f}% ({kq['pnl_krw']//10000:+,}만)<br>{kq['eval_krw']:,}원</span></div>
         <div class="row"><span><b>와이지-원</b> (656주 · 평단 12,910원)<br><span class="sub">현재 ₩{yg['curr']:,.0f} ({yg['pct']:+.2f}%)</span></span><span class="{yg_color}" style="text-align:right;">{yg['ret_pct']:+.2f}% ({yg['pnl_krw']//10000:+,}만)<br>{yg['eval_krw']:,}원</span></div>
         <div class="row"><span><b>오름테라퓨틱(계좌1)</b> (1,097주 · 평단 107,113원)<br><span class="sub">현재 ₩{or1['curr']:,.0f} ({or1['pct']:+.2f}%)</span></span><span class="{or1_color}" style="text-align:right;">{or1['ret_pct']:+.2f}% ({or1['pnl_krw']//10000:+,}만)<br>{or1['eval_krw']:,}원</span></div>
@@ -643,9 +646,9 @@ def main():
         new Chart(document.getElementById('pfChart'), {{
             type: 'doughnut',
             data: {{
-                labels: ['RAM(반도체)', '바이오(오름·앱클론)', '코스닥150레버리지', '가용현금', '와이지-원'],
+                labels: ['RAM(반도체 6,460주)', '바이오(오름·앱클론)', '코스닥150레버리지', '잔여현금', '와이지-원'],
                 datasets: [{{
-                    data: [{ram_eval_krw//10000}, {bio_eval_krw//10000}, {kq['eval_krw']//10000}, {rem_cash_eval//10000}, {yg['eval_krw']//10000}],
+                    data: [{ram_combined_eval_krw//10000}, {bio_eval_krw//10000}, {kq['eval_krw']//10000}, {rem_cash_eval//10000}, {yg['eval_krw']//10000}],
                     backgroundColor: ['#38bdf8', '#c084fc', '#f87171', '#4ade80', '#fbbf24'],
                     borderWidth: 0
                 }}]
@@ -678,9 +681,9 @@ def main():
         header_prefix = "🚨 <b>[긴급 매수/청산 시그널 포착!]</b>\n" if (any_buy_alert and not is_scheduled_slot) else ""
         tranche_section = f"\n🛡️ <b>신규 스윙 트랑셰 익절·스탑 계산기</b>\n{tranche_tg}\n" if tranche_tg else ""
         tg_msg = (
-            f"{header_prefix}🛡️ <b>[마스터 관제탑 V5.7] 트랑셰 장부분리 브리핑</b>\n"
+            f"{header_prefix}🛡️ <b>[마스터 관제탑 V5.7] RAM 1차(606주) 실전 가동</b>\n"
             f"⏰ {now_str} (환율 ₩{krw_p:,.1f})\n"
-            f"💰 총자산: <b>{total_eval_krw//10000:,}만 원</b> | 총손익: <b>{total_pnl_krw//10000:+,}만 원 ({stock_ret_pct:+.2f}%)</b>\n"
+            f"💰 총자산: <b>{total_eval_krw//10000:,}만 원</b> | 잔여현금: <b>{rem_cash_eval//10000:,}만 원</b>\n"
             f"👉 <a href='{DASHBOARD_URL}'>터치하여 V5.7 콕핏 대시보드 열기</a>\n\n"
             f"📅 <b>다가오는 반도체·바이오 핵심 일정</b>\n{dday_tg}\n"
             f"{tranche_section}\n"
