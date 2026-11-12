@@ -22,7 +22,7 @@ PORTFOLIO = {
     "CASH": {"name": "가용 현금", "eval_krw": 10000000}
 }
 
-# MU 제외, RAM 단독 기준값(2배 레버리지 특성 반영) 및 국내 종목 맞춤 파라미터
+# RAM 단독 및 국내 종목 백테스팅 최적화 파라미터
 CUSTOM_PARAMS = {
     "RAM": {"rsi_cut": 35.0, "disp_cut": -9.0},
     "KODEX_LEV": {"rsi_cut": 34.0, "disp_cut": -9.0},
@@ -233,9 +233,11 @@ def calc_kr_holding(key, param_key, is_core=False, cached_m=None):
         p_cfg = CUSTOM_PARAMS.get(param_key, {"rsi_cut": 35.0, "disp_cut": -8.0})
         m = get_quad_verified_metrics(item["tickers"], rsi_cut=p_cfg["rsi_cut"], disp_cut=p_cfg["disp_cut"], is_core_cash_target=is_core)
     curr_p = m["curr"] if m["curr"] > 0 else float(item["fallback_krw"])
+    cost_krw = int(item["avg_krw"] * item["qty"])
     eval_krw = int(curr_p * item["qty"])
+    pnl_krw = eval_krw - cost_krw
     ret_pct = ((curr_p - item["avg_krw"]) / item["avg_krw"]) * 100
-    m["curr"], m["eval_krw"], m["ret_pct"] = curr_p, eval_krw, ret_pct
+    m["curr"], m["cost_krw"], m["eval_krw"], m["pnl_krw"], m["ret_pct"] = curr_p, cost_krw, eval_krw, pnl_krw, ret_pct
     return m
 
 def get_latest_strict_news(query, tag, max_items=2, max_hours=48):
@@ -309,7 +311,6 @@ def main():
     dday_html, dday_tg = build_dday_section(now_kst)
     tranche_html, tranche_tg, tranche_alert = evaluate_new_tranches()
 
-    # MU 제외, RAM 단독 4중 검증 지표 산출
     ram_param = CUSTOM_PARAMS["RAM"]
     ram = get_quad_verified_metrics("RAM", rsi_cut=ram_param["rsi_cut"], disp_cut=ram_param["disp_cut"], is_core_cash_target=True)
     krw = get_quad_verified_metrics("KRW=X", is_core_cash_target=False)
@@ -318,9 +319,12 @@ def main():
     ram_cfg = PORTFOLIO["RAM"]
     ram_p = ram["curr"] if ram["curr"] > 0 else ram_cfg["fallback_usd"]
     ram_reg_p = ram["reg_curr"] if ram["reg_curr"] > 0 else ram_p
+    ram_cost_usd = ram_cfg["avg_usd"] * ram_cfg["qty"]
     ram_eval_usd = ram_p * ram_cfg["qty"]
     ram_ret = ((ram_p - ram_cfg["avg_usd"]) / ram_cfg["avg_usd"]) * 100
+    ram_cost_krw = int(ram_cost_usd * krw_p)
     ram_eval_krw = int(ram_eval_usd * krw_p)
+    ram_pnl_krw = ram_eval_krw - ram_cost_krw
 
     kq = calc_kr_holding("KODEX_LEV", "KODEX_LEV", is_core=True)
     yg = calc_kr_holding("YG1", "YG1", is_core=False)
@@ -329,8 +333,15 @@ def main():
     ab = calc_kr_holding("ABCLON", "ABCLON", is_core=False)
     cash_eval = PORTFOLIO["CASH"]["eval_krw"]
 
+    # 원화 환산 총 매수원금, 평가액, 총 평가손익(원/% 합산) 계산
+    stock_cost_krw = ram_cost_krw + kq["cost_krw"] + yg["cost_krw"] + or1["cost_krw"] + or2["cost_krw"] + ab["cost_krw"]
     stock_eval_krw = ram_eval_krw + kq["eval_krw"] + yg["eval_krw"] + or1["eval_krw"] + or2["eval_krw"] + ab["eval_krw"]
+    total_pnl_krw = stock_eval_krw - stock_cost_krw
+    stock_ret_pct = ((stock_eval_krw - stock_cost_krw) / stock_cost_krw) * 100.0 if stock_cost_krw > 0 else 0.0
+
+    total_cost_krw = stock_cost_krw + cash_eval
     total_eval_krw = stock_eval_krw + cash_eval
+    total_asset_ret_pct = ((total_eval_krw - total_cost_krw) / total_cost_krw) * 100.0 if total_cost_krw > 0 else 0.0
     bio_eval_krw = or1["eval_krw"] + or2["eval_krw"] + ab["eval_krw"]
 
     news = (get_latest_strict_news("마이크론 OR 삼성전자 반도체 OR SK하이닉스 HBM", "[반도체/DRAM]", 2) +
@@ -341,6 +352,7 @@ def main():
     news_html = "".join([f'<div class="n-item"><div class="n-hd"><span class="tag">{x["tag"]}</span><span class="meta">{x["time"]} | {x["source"]}</span></div><a href="{x["link"]}" target="_blank">{x["title"]}</a></div>' for x in news]) or '<div class="n-item">최근 48시간 내 속보 없음</div>'
     news_tg = "\n".join([f"• {x['tag']} <a href='{x['link']}'>{x['title']}</a> ({x['source']} {x['time']})" for x in news]) or "• 최근 48시간 내 속보 없음"
 
+    pnl_color = "pos" if total_pnl_krw >= 0 else "neg"
     ram_color = "pos" if ram_ret >= 0 else "neg"
     kq_color = "pos" if kq['ret_pct'] >= 0 else "neg"
     yg_color = "pos" if yg['ret_pct'] >= 0 else "neg"
@@ -395,17 +407,18 @@ def main():
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <meta http-equiv="refresh" content="1800">
-    <title>마스터 관제탑 V5.5</title>
+    <title>마스터 관제탑 V5.6</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {{ font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #070b14; color: #f8fafc; margin: 0; padding: 12px; max-width: 600px; margin: auto; }}
         .top-hd {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }}
         .top-title {{ font-size: 1.1rem; font-weight: 800; color: #38bdf8; }}
         .top-sync {{ font-size: 0.72rem; color: #94a3b8; }}
-        .kpi-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }}
-        .kpi-box {{ background: linear-gradient(145deg, #131c31, #0f172a); border: 1px solid #1e293b; border-radius: 10px; padding: 10px 8px; text-align: center; }}
-        .kpi-lbl {{ font-size: 0.70rem; color: #94a3b8; margin-bottom: 4px; }}
-        .kpi-val {{ font-size: 0.95rem; font-weight: 800; color: #f8fafc; }}
+        .kpi-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }}
+        .kpi-box {{ background: linear-gradient(145deg, #131c31, #0f172a); border: 1px solid #1e293b; border-radius: 10px; padding: 10px; text-align: center; }}
+        .kpi-lbl {{ font-size: 0.71rem; color: #94a3b8; margin-bottom: 3px; }}
+        .kpi-val {{ font-size: 1.02rem; font-weight: 800; color: #f8fafc; }}
+        .kpi-sub {{ font-size: 0.68rem; color: #64748b; margin-top: 2px; }}
         .q-grid {{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 14px; }}
         .q-tile {{ border-radius: 8px; padding: 8px 4px; text-align: center; border: 1px solid #1e293b; }}
         .q-buy {{ background: rgba(74, 222, 128, 0.15); border-color: #4ade80; }}
@@ -446,22 +459,30 @@ def main():
 </head>
 <body>
     <div class="top-hd">
-        <div class="top-title">🛡️ 마스터 관제탑 V5.5</div>
+        <div class="top-title">🛡️ 마스터 관제탑 V5.6</div>
         <div class="top-sync">동기화: {now_str} (환율 ₩{krw_p:,.1f})</div>
     </div>
 
     <div class="kpi-grid">
         <div class="kpi-box">
-            <div class="kpi-lbl">총 평가자산</div>
+            <div class="kpi-lbl">총 평가자산 (현금포함)</div>
             <div class="kpi-val" style="color:#38bdf8;">{total_eval_krw//10000:,}만 원</div>
+            <div class="kpi-sub">총 원금 {total_cost_krw//10000:,}만 원</div>
         </div>
         <div class="kpi-box">
-            <div class="kpi-lbl">주식 평가액</div>
-            <div class="kpi-val">{stock_eval_krw//10000:,}만 원</div>
+            <div class="kpi-lbl">원화 환산 총 평가손익</div>
+            <div class="kpi-val {pnl_color}">{total_pnl_krw//10000:+,}만 원</div>
+            <div class="kpi-sub">{total_pnl_krw:+,}원</div>
         </div>
         <div class="kpi-box">
-            <div class="kpi-lbl">대기 현금</div>
-            <div class="kpi-val" style="color:#4ade80;">{cash_eval//10000:,}만 원</div>
+            <div class="kpi-lbl">보유 주식 합산 수익률</div>
+            <div class="kpi-val {pnl_color}">{stock_ret_pct:+.2f}%</div>
+            <div class="kpi-sub">현금포함 총자산 {total_asset_ret_pct:+.2f}%</div>
+        </div>
+        <div class="kpi-box">
+            <div class="kpi-lbl">주식 평가액 / 대기 현금</div>
+            <div class="kpi-val">{stock_eval_krw//10000:,}만 / <span style="color:#4ade80;">{cash_eval//10000:,}만</span></div>
+            <div class="kpi-sub">주식 원금 {stock_cost_krw//10000:,}만 원</div>
         </div>
     </div>
 
@@ -487,12 +508,12 @@ def main():
     <div class="card">
         <h2>💼 보유 종목 상세 평가 & 포트폴리오 비중</h2>
         <div style="width:210px;margin:0 auto 12px auto;"><canvas id="pfChart"></canvas></div>
-        <div class="row"><span><b>RAM</b> (5,854주 · 평단 $10.08) <span class="badge">{ram['session']}</span><br><span class="sub">현재 ${ram_p:.2f} (본장 ${ram_reg_p:.2f} | 확장 {ram['ext_pct']:+.2f}%)</span></span><span class="{ram_color}" style="text-align:right;">{ram_ret:+.2f}%<br>${ram_eval_usd:,.0f} ({ram_eval_krw//10000:,}만)</span></div>
-        <div class="row"><span><b>코스닥150레버리지</b> (3,354주 · 평단 6,152원)<br><span class="sub">현재 ₩{kq['curr']:,.0f} ({kq['pct']:+.2f}%)</span></span><span class="{kq_color}" style="text-align:right;">{kq['ret_pct']:+.2f}%<br>{kq['eval_krw']:,}원</span></div>
-        <div class="row"><span><b>와이지-원</b> (656주 · 평단 12,910원)<br><span class="sub">현재 ₩{yg['curr']:,.0f} ({yg['pct']:+.2f}%)</span></span><span class="{yg_color}" style="text-align:right;">{yg['ret_pct']:+.2f}%<br>{yg['eval_krw']:,}원</span></div>
-        <div class="row"><span><b>오름테라퓨틱(계좌1)</b> (1,097주 · 평단 107,113원)<br><span class="sub">현재 ₩{or1['curr']:,.0f} ({or1['pct']:+.2f}%)</span></span><span class="{or1_color}" style="text-align:right;">{or1['ret_pct']:+.2f}%<br>{or1['eval_krw']:,}원</span></div>
-        <div class="row"><span><b>오름테라퓨틱(계좌2)</b> (256주 · 평단 96,650원)<br><span class="sub">현재 ₩{or2['curr']:,.0f} ({or2['pct']:+.2f}%)</span></span><span class="{or2_color}" style="text-align:right;">{or2['ret_pct']:+.2f}%<br>{or2['eval_krw']:,}원</span></div>
-        <div class="row"><span><b>앱클론</b> (256주 · 평단 52,735원)<br><span class="sub">현재 ₩{ab['curr']:,.0f} ({ab['pct']:+.2f}%)</span></span><span class="{ab_color}" style="text-align:right;">{ab['ret_pct']:+.2f}%<br>{ab['eval_krw']:,}원</span></div>
+        <div class="row"><span><b>RAM</b> (5,854주 · 평단 $10.08) <span class="badge">{ram['session']}</span><br><span class="sub">현재 ${ram_p:.2f} (본장 ${ram_reg_p:.2f} | 확장 {ram['ext_pct']:+.2f}%)</span></span><span class="{ram_color}" style="text-align:right;">{ram_ret:+.2f}% ({ram_pnl_krw//10000:+,}만)<br>${ram_eval_usd:,.0f} ({ram_eval_krw//10000:,}만)</span></div>
+        <div class="row"><span><b>코스닥150레버리지</b> (3,354주 · 평단 6,152원)<br><span class="sub">현재 ₩{kq['curr']:,.0f} ({kq['pct']:+.2f}%)</span></span><span class="{kq_color}" style="text-align:right;">{kq['ret_pct']:+.2f}% ({kq['pnl_krw']//10000:+,}만)<br>{kq['eval_krw']:,}원</span></div>
+        <div class="row"><span><b>와이지-원</b> (656주 · 평단 12,910원)<br><span class="sub">현재 ₩{yg['curr']:,.0f} ({yg['pct']:+.2f}%)</span></span><span class="{yg_color}" style="text-align:right;">{yg['ret_pct']:+.2f}% ({yg['pnl_krw']//10000:+,}만)<br>{yg['eval_krw']:,}원</span></div>
+        <div class="row"><span><b>오름테라퓨틱(계좌1)</b> (1,097주 · 평단 107,113원)<br><span class="sub">현재 ₩{or1['curr']:,.0f} ({or1['pct']:+.2f}%)</span></span><span class="{or1_color}" style="text-align:right;">{or1['ret_pct']:+.2f}% ({or1['pnl_krw']//10000:+,}만)<br>{or1['eval_krw']:,}원</span></div>
+        <div class="row"><span><b>오름테라퓨틱(계좌2)</b> (256주 · 평단 96,650원)<br><span class="sub">현재 ₩{or2['curr']:,.0f} ({or2['pct']:+.2f}%)</span></span><span class="{or2_color}" style="text-align:right;">{or2['ret_pct']:+.2f}% ({or2['pnl_krw']//10000:+,}만)<br>{or2['eval_krw']:,}원</span></div>
+        <div class="row"><span><b>앱클론</b> (256주 · 평단 52,735원)<br><span class="sub">현재 ₩{ab['curr']:,.0f} ({ab['pct']:+.2f}%)</span></span><span class="{ab_color}" style="text-align:right;">{ab['ret_pct']:+.2f}% ({ab['pnl_krw']//10000:+,}만)<br>{ab['eval_krw']:,}원</span></div>
     </div>
 
     <div class="card"><h2>📰 최근 48시간 최신 속보</h2>{news_html}</div>
@@ -536,9 +557,10 @@ def main():
         header_prefix = "🚨 <b>[긴급 매수/청산 시그널 포착!]</b>\n" if (any_buy_alert and not is_scheduled_slot) else ""
         tranche_section = f"\n🛡️ <b>신규 진입 물량 트레일링 스탑</b>\n{tranche_tg}\n" if tranche_tg else ""
         tg_msg = (
-            f"{header_prefix}🛡️ <b>[마스터 관제탑 V5.5] RAM 집중 &amp; 콕핏 브리핑</b>\n"
-            f"⏰ {now_str} | 총자산: <b>{total_eval_krw//10000:,}만 원</b>\n"
-            f"👉 <a href='{DASHBOARD_URL}'>터치하여 V5.5 콕핏 대시보드 열기</a>\n\n"
+            f"{header_prefix}🛡️ <b>[마스터 관제탑 V5.6] 총손익 &amp; 콕핏 브리핑</b>\n"
+            f"⏰ {now_str} (환율 ₩{krw_p:,.1f})\n"
+            f"💰 총자산: <b>{total_eval_krw//10000:,}만 원</b> | 총손익: <b>{total_pnl_krw//10000:+,}만 원 ({stock_ret_pct:+.2f}%)</b>\n"
+            f"👉 <a href='{DASHBOARD_URL}'>터치하여 V5.6 콕핏 대시보드 열기</a>\n\n"
             f"📅 <b>다가오는 반도체·바이오 핵심 일정</b>\n{dday_tg}\n\n"
             f"🎯 <b>5대 종목 맞춤 4중 검증 시그널</b>\n"
             f"• <b>RAM [{ram['session']}]</b>: ${ram_p:.2f} | RSI {ram['rsi']:.1f} | 이격 {ram['disp']:+.1f}% ➔ <b>{ram['sig']}</b>\n"
@@ -547,12 +569,12 @@ def main():
             f"• <b>오름테라퓨틱</b>: RSI {or1['rsi']:.1f} | 이격 {or1['disp']:+.1f}% ➔ <b>{or1['sig']}</b>\n"
             f"• <b>앱클론</b>: RSI {ab['rsi']:.1f} | 이격 {ab['disp']:+.1f}% ➔ <b>{ab['sig']}</b>\n"
             f"{tranche_section}\n"
-            f"💼 <b>보유 종목 실시간 평가</b>\n"
-            f"• <b>RAM (5,854주)</b>: ${ram_p:.2f} (확장 {ram['ext_pct']:+.2f}%) | <b>{ram_ret:+.2f}%</b> (${ram_eval_usd:,.0f})\n"
-            f"• <b>코스닥레버리지</b>: ₩{kq['curr']:,.0f} | <b>{kq['ret_pct']:+.2f}%</b> ({kq['eval_krw']:,}원)\n"
-            f"• <b>와이지-원</b>: ₩{yg['curr']:,.0f} | <b>{yg['ret_pct']:+.2f}%</b> ({yg['eval_krw']:,}원)\n"
-            f"• <b>오름 계좌1·2</b>: ₩{or1['curr']:,.0f} | <b>{or1['ret_pct']:+.2f}%</b> / <b>{or2['ret_pct']:+.2f}%</b>\n"
-            f"• <b>앱클론</b>: ₩{ab['curr']:,.0f} | <b>{ab['ret_pct']:+.2f}%</b> ({ab['eval_krw']:,}원)\n\n"
+            f"💼 <b>보유 종목 실시간 평가 (원화 손익)</b>\n"
+            f"• <b>RAM (5,854주)</b>: ${ram_p:.2f} | <b>{ram_ret:+.2f}%</b> ({ram_pnl_krw//10000:+,}만 원)\n"
+            f"• <b>코스닥레버리지</b>: ₩{kq['curr']:,.0f} | <b>{kq['ret_pct']:+.2f}%</b> ({kq['pnl_krw']//10000:+,}만 원)\n"
+            f"• <b>와이지-원</b>: ₩{yg['curr']:,.0f} | <b>{yg['ret_pct']:+.2f}%</b> ({yg['pnl_krw']//10000:+,}만 원)\n"
+            f"• <b>오름 계좌1·2</b>: ₩{or1['curr']:,.0f} | <b>{or1['ret_pct']:+.2f}%</b> ({or1['pnl_krw']//10000:+,}만) / <b>{or2['ret_pct']:+.2f}%</b> ({or2['pnl_krw']//10000:+,}만)\n"
+            f"• <b>앱클론</b>: ₩{ab['curr']:,.0f} | <b>{ab['ret_pct']:+.2f}%</b> ({ab['pnl_krw']//10000:+,}만 원)\n\n"
             f"📰 <b>최근 48시간 핵심 속보</b>\n{news_tg}"
         )
         requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json={"chat_id": CHAT_ID, "text": tg_msg, "parse_mode": "HTML", "disable_web_page_preview": True}, timeout=10)
