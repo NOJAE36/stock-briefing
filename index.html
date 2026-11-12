@@ -4,17 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <meta http-equiv="refresh" content="1800">
-    <title>마스터 관제탑 V5.5</title>
+    <title>마스터 관제탑 V5.6</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #070b14; color: #f8fafc; margin: 0; padding: 12px; max-width: 600px; margin: auto; }
         .top-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .top-title { font-size: 1.1rem; font-weight: 800; color: #38bdf8; }
         .top-sync { font-size: 0.72rem; color: #94a3b8; }
-        .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
-        .kpi-box { background: linear-gradient(145deg, #131c31, #0f172a); border: 1px solid #1e293b; border-radius: 10px; padding: 10px 8px; text-align: center; }
-        .kpi-lbl { font-size: 0.70rem; color: #94a3b8; margin-bottom: 4px; }
-        .kpi-val { font-size: 0.95rem; font-weight: 800; color: #f8fafc; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+        .kpi-box { background: linear-gradient(145deg, #131c31, #0f172a); border: 1px solid #1e293b; border-radius: 10px; padding: 10px; text-align: center; }
+        .kpi-lbl { font-size: 0.71rem; color: #94a3b8; margin-bottom: 3px; }
+        .kpi-val { font-size: 1.02rem; font-weight: 800; color: #f8fafc; }
+        .kpi-sub { font-size: 0.68rem; color: #64748b; margin-top: 2px; }
         .q-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 14px; }
         .q-tile { border-radius: 8px; padding: 8px 4px; text-align: center; border: 1px solid #1e293b; }
         .q-buy { background: rgba(74, 222, 128, 0.15); border-color: #4ade80; }
@@ -55,22 +56,30 @@
 </head>
 <body>
     <div class="top-hd">
-        <div class="top-title">🛡️ 마스터 관제탑 V5.5</div>
-        <div class="top-sync">동기화: 2026-11-12 20:12 KST (환율 ₩1,331.5)</div>
+        <div class="top-title">🛡️ 마스터 관제탑 V5.6</div>
+        <div class="top-sync">동기화: 2026-11-12 20:21 KST (환율 ₩1,332.0)</div>
     </div>
 
     <div class="kpi-grid">
         <div class="kpi-box">
-            <div class="kpi-lbl">총 평가자산</div>
-            <div class="kpi-val" style="color:#38bdf8;">10,500만 원</div>
+            <div class="kpi-lbl">총 평가자산 (현금포함)</div>
+            <div class="kpi-val" style="color:#38bdf8;">10,478만 원</div>
+            <div class="kpi-sub">총 원금 27,342만 원</div>
         </div>
         <div class="kpi-box">
-            <div class="kpi-lbl">주식 평가액</div>
-            <div class="kpi-val">9,500만 원</div>
+            <div class="kpi-lbl">원화 환산 총 평가손익</div>
+            <div class="kpi-val neg">-16,865만 원</div>
+            <div class="kpi-sub">-168,641,133원</div>
         </div>
         <div class="kpi-box">
-            <div class="kpi-lbl">대기 현금</div>
-            <div class="kpi-val" style="color:#4ade80;">1,000만 원</div>
+            <div class="kpi-lbl">보유 주식 합산 수익률</div>
+            <div class="kpi-val neg">-64.02%</div>
+            <div class="kpi-sub">현금포함 총자산 -61.68%</div>
+        </div>
+        <div class="kpi-box">
+            <div class="kpi-lbl">주식 평가액 / 대기 현금</div>
+            <div class="kpi-val">9,478만 / <span style="color:#4ade80;">1,000만</span></div>
+            <div class="kpi-sub">주식 원금 26,342만 원</div>
         </div>
     </div>
 
@@ -113,13 +122,13 @@
         
         <div class="sig-box" style="border-left-color:#38bdf8;">
             <div class="sig-hd">
-                <div><b>🇺🇸 RAM (DRAM 2X ETF)</b> <span class="badge">🌅프리장</span> <span class="sub">$6.22 (-6.18%)</span></div>
-                <div class="my-ret"><span class="neg">수익 -38.3%</span></div>
+                <div><b>🇺🇸 RAM (DRAM 2X ETF)</b> <span class="badge">🌅프리장</span> <span class="sub">$6.19 (-6.64%)</span></div>
+                <div class="my-ret"><span class="neg">수익 -38.6%</span></div>
             </div>
             <div class="bar-bg"><div class="bar-fill" style="width:50%;background:#38bdf8;"></div></div>
             <div class="metric-grid">
-                <div class="m-cell"><span class="sub">RSI(14)</span><br><b>38.7</b> <span class="sub">(기준 35)</span></div>
-                <div class="m-cell"><span class="sub">20일 이격도</span><br><b>-19.6%</b> <span class="sub">(-9%)</span></div>
+                <div class="m-cell"><span class="sub">RSI(14)</span><br><b>38.5</b> <span class="sub">(기준 35)</span></div>
+                <div class="m-cell"><span class="sub">20일 이격도</span><br><b>-19.9%</b> <span class="sub">(-9%)</span></div>
                 <div class="m-cell"><span class="sub">볼린저 %B</span><br><b>0.25</b></div>
                 <div class="m-cell"><span class="sub">거래량(20일)</span><br><b>1.5배</b></div>
             </div>
@@ -236,12 +245,12 @@
     <div class="card">
         <h2>💼 보유 종목 상세 평가 & 포트폴리오 비중</h2>
         <div style="width:210px;margin:0 auto 12px auto;"><canvas id="pfChart"></canvas></div>
-        <div class="row"><span><b>RAM</b> (5,854주 · 평단 $10.08) <span class="badge">🌅프리장</span><br><span class="sub">현재 $6.22 (본장 $6.63 | 확장 -6.18%)</span></span><span class="neg" style="text-align:right;">-38.28%<br>$36,412 (4,848만)</span></div>
-        <div class="row"><span><b>코스닥150레버리지</b> (3,354주 · 평단 6,152원)<br><span class="sub">현재 ₩4,300 (-3.15%)</span></span><span class="neg" style="text-align:right;">-30.10%<br>14,422,200원</span></div>
-        <div class="row"><span><b>와이지-원</b> (656주 · 평단 12,910원)<br><span class="sub">현재 ₩9,820 (-2.09%)</span></span><span class="neg" style="text-align:right;">-23.93%<br>6,441,920원</span></div>
-        <div class="row"><span><b>오름테라퓨틱(계좌1)</b> (1,097주 · 평단 107,113원)<br><span class="sub">현재 ₩14,830 (-0.20%)</span></span><span class="neg" style="text-align:right;">-86.15%<br>16,268,510원</span></div>
-        <div class="row"><span><b>오름테라퓨틱(계좌2)</b> (256주 · 평단 96,650원)<br><span class="sub">현재 ₩14,830 (-0.20%)</span></span><span class="neg" style="text-align:right;">-84.66%<br>3,796,480원</span></div>
-        <div class="row"><span><b>앱클론</b> (256주 · 평단 52,735원)<br><span class="sub">현재 ₩21,850 (-3.32%)</span></span><span class="neg" style="text-align:right;">-58.57%<br>5,593,600원</span></div>
+        <div class="row"><span><b>RAM</b> (5,854주 · 평단 $10.08) <span class="badge">🌅프리장</span><br><span class="sub">현재 $6.19 (본장 $6.63 | 확장 -6.64%)</span></span><span class="neg" style="text-align:right;">-38.58% (-3,032만)<br>$36,236 (4,826만)</span></div>
+        <div class="row"><span><b>코스닥150레버리지</b> (3,354주 · 평단 6,152원)<br><span class="sub">현재 ₩4,300 (-3.15%)</span></span><span class="neg" style="text-align:right;">-30.10% (-622만)<br>14,422,200원</span></div>
+        <div class="row"><span><b>와이지-원</b> (656주 · 평단 12,910원)<br><span class="sub">현재 ₩9,820 (-2.09%)</span></span><span class="neg" style="text-align:right;">-23.93% (-203만)<br>6,441,920원</span></div>
+        <div class="row"><span><b>오름테라퓨틱(계좌1)</b> (1,097주 · 평단 107,113원)<br><span class="sub">현재 ₩14,830 (-0.20%)</span></span><span class="neg" style="text-align:right;">-86.15% (-10,124만)<br>16,268,510원</span></div>
+        <div class="row"><span><b>오름테라퓨틱(계좌2)</b> (256주 · 평단 96,650원)<br><span class="sub">현재 ₩14,830 (-0.20%)</span></span><span class="neg" style="text-align:right;">-84.66% (-2,095만)<br>3,796,480원</span></div>
+        <div class="row"><span><b>앱클론</b> (256주 · 평단 52,735원)<br><span class="sub">현재 ₩21,850 (-3.32%)</span></span><span class="neg" style="text-align:right;">-58.57% (-791만)<br>5,593,600원</span></div>
     </div>
 
     <div class="card"><h2>📰 최근 48시간 최신 속보</h2><div class="n-item"><div class="n-hd"><span class="tag">[반도체/DRAM]</span><span class="meta">11/12 18:34 | 뉴스핌</span></div><a href="https://news.google.com/rss/articles/CBMiXEFVX3lxTE5YZEZEM0lnd3hQYmtKSk5Qd0gyYV9Nc0FaNHRfZTVzWnZ1dS1jRVFHUExOTFB4MVE2MXZxWWFsclNWb012bHltVk4xWGxDZU0xeGt6eWlPNGVkQnlx?oc=5" target="_blank">젠슨 황 논란 확산일로…삼성전자·SK하이닉스, 실적 변수</a></div><div class="n-item"><div class="n-hd"><span class="tag">[반도체/DRAM]</span><span class="meta">11/12 12:31 | 디일렉</span></div><a href="https://news.google.com/rss/articles/CBMiZkFVX3lxTE1lZ0hkTlhnVUZBSHU2ekZjZFJqQldDVEJqbWxVUVRDMEtrQTFCTk5BUG5ERkZuNWwwVVV1RlF1UFdERUZQbE9xY2tNOTVpaWxROUdESXc3cTlnZ1ZZYzNQbnItWDhZZw?oc=5" target="_blank">삼성, 충청권 144조 투자 본격화…HBM·OLED·반도체 기판 증설</a></div><div class="n-item"><div class="n-hd"><span class="tag">[매크로/코스닥]</span><span class="meta">11/11 17:47 | 한양경제</span></div><a href="https://news.google.com/rss/articles/CBMickFVX3lxTE15RmxGSHVIeGpZTXdRRERKbmRqVW9vN2FqUWJtTmN1MjFzVGhHNlpNOVFCc1I3OXJGeFFTOXppakFmZFNYeWs1T09PX2tuOVUxYXMxeHgyakYxUjdZOVJFek41VGJ3T1hpbmxDbFB2Um53UQ?oc=5" target="_blank">[마감시황] 코스피, 금리 인상 우려 딛고 5300선 탈환…코스닥 5.62% 급등</a></div><div class="n-item"><div class="n-hd"><span class="tag">[매크로/코스닥]</span><span class="meta">11/11 17:05 | https://www.theconnectmoney.com/</span></div><a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE00Z3NZMW9XZnlHX0RveUxzdUV2LUFqSXh4Y2I4c0xVMi05OEhpLWFTLVFDZlRfSWQ3ZkZjc1dnazhOWllRRUlIVmtkR0pweHFERTFvdU5lUFBkX3lZX3M3dg?oc=5" target="_blank">미국은 물가 충격에 하락했는데… 코스피 2.60%·코스닥 5.62% 동반 급등</a></div><div class="n-item"><div class="n-hd"><span class="tag">[바이오]</span><span class="meta">11/12 12:00 | 메디코파마</span></div><a href="https://news.google.com/rss/articles/CBMickFVX3lxTE1pTjlfZ3ZoODRvSWdjZGh2emgzbHRURWZNVWl6LTR2Ny14VTAwQ1NrTmtLRmk4Rm95TUdkTzBQUXlIMmxnVi1DQVJnZTM2dzdSaW4yenloLS1SbXZ1TDlQem9PZjEydXk3WTR6alFEWGUxdw?oc=5" target="_blank">앱클론 'HLX22', 글로벌 3상 도전…키트루다 없이 위암 잡는다</a></div><div class="n-item"><div class="n-hd"><span class="tag">[바이오]</span><span class="meta">11/11 09:36 | 바이오스펙테이터</span></div><a href="https://news.google.com/rss/articles/CBMiV0FVX3lxTFBLNEZ2YlVmcTQxVm1Yb0dSblp4a0ZVX3lKTkNKQkpVSk5LMm5DQVBWZGI0UnRVSHZUWjF5YWtEWnNRVGN3MkRicFpQU0NVZnItaWFFZ1doSQ?oc=5" target="_blank">앱클론, 'CD19 CAR-T' 유럽특허 등록.."주요 8개국 완료"</a></div></div>
@@ -252,7 +261,7 @@
             data: {
                 labels: ['RAM(반도체)', '바이오(오름·앱클론)', '코스닥150레버리지', '가용현금', '와이지-원'],
                 datasets: [{
-                    data: [4848, 2565, 1442, 1000, 644],
+                    data: [4826, 2565, 1442, 1000, 644],
                     backgroundColor: ['#38bdf8', '#c084fc', '#f87171', '#4ade80', '#fbbf24'],
                     borderWidth: 0
                 }]
