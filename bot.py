@@ -7,7 +7,8 @@ CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '').strip()
 GITHUB_REPO = os.environ.get('GITHUB_REPOSITORY', '').strip().lower()
 EVENT_NAME = os.environ.get('GITHUB_EVENT_NAME', '').strip()
 
-NOTIFY_HOURS_KST = [8, 22]
+# 새벽 시간(00시~06시)에 긴급 타점 알림을 무음 처리할지 여부 (True: 새벽 무음 / False: 새벽에도 타점 발생 시 알림)
+QUIET_NIGHT_MODE = True
 
 CACHE_BUST = datetime.datetime.now().strftime("%m%d%H%M")
 DASHBOARD_URL = f"https://{GITHUB_REPO.split('/')[0]}.github.io/{GITHUB_REPO.split('/')[1]}/?v={CACHE_BUST}" if '/' in GITHUB_REPO else f"https://nojae36.github.io/stock-briefing/?v={CACHE_BUST}"
@@ -30,7 +31,6 @@ CUSTOM_PARAMS = {
     "ABCLON": {"rsi_cut": 32.0, "disp_cut": -11.0}
 }
 
-# 신규 진입 물량 전용 트레일링 스탑 리스트 (신규 매수 시에만 주석 해제 후 입력)
 NEW_TRANCHES = [
     # {"name": "RAM 신규1차", "symbol": "RAM", "entry_date": "2026-11-15", "entry_price": 9.50, "qty": 200, "trail_pct": -7.0, "target_pct": 12.0},
 ]
@@ -400,12 +400,24 @@ def main():
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html)
 
-    any_buy_alert = any([mu["alert"], kq["alert"], yg["alert"], or1["alert"], ab["alert"], tranche_alert])
-    is_scheduled_hour = (now_kst.hour in NOTIFY_HOURS_KST)
-    is_manual_run = (EVENT_NAME == "workflow_dispatch")
+    # 오전 슬롯(08시~10시 KST), 밤 슬롯(22시~23시 KST) 중 하루 1회씩 100% 발송 보장
+    today_str = now_kst.strftime("%Y-%m-%d")
+    curr_hour = now_kst.hour
+    slot = "AM" if (8 <= curr_hour <= 10) else ("PM" if (22 <= curr_hour <= 23) else "")
+    slot_key = f"{today_str}_{slot}" if slot else ""
 
-    if TOKEN and CHAT_ID and (is_scheduled_hour or is_manual_run or any_buy_alert):
-        header_prefix = "🚨 <b>[긴급 매수/청산 시그널 포착!]</b>\n" if (any_buy_alert and not is_scheduled_hour) else ""
+    last_sent = ""
+    if os.path.exists("last_sent.txt"):
+        with open("last_sent.txt", "r", encoding="utf-8") as lf:
+            last_sent = lf.read().strip()
+
+    is_scheduled_slot = (slot != "" and last_sent != slot_key)
+    is_manual_run = (EVENT_NAME == "workflow_dispatch")
+    is_quiet_hour = QUIET_NIGHT_MODE and (0 <= curr_hour <= 6)
+    any_buy_alert = any([mu["alert"], kq["alert"], yg["alert"], or1["alert"], ab["alert"], tranche_alert]) and not is_quiet_hour
+
+    if TOKEN and CHAT_ID and (is_scheduled_slot or is_manual_run or any_buy_alert):
+        header_prefix = "🚨 <b>[긴급 매수/청산 시그널 포착!]</b>\n" if (any_buy_alert and not is_scheduled_slot) else ""
         tranche_section = f"\n🛡️ <b>신규 진입 물량 트레일링 스탑</b>\n{tranche_tg}\n" if tranche_tg else ""
         tg_msg = (
             f"{header_prefix}🛡️ <b>[마스터 관제탑 V5.4] 맞춤 타점 &amp; D-Day 브리핑</b>\n"
@@ -422,6 +434,10 @@ def main():
             f"📰 <b>최근 48시간 핵심 속보</b>\n{news_tg}"
         )
         requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json={"chat_id": CHAT_ID, "text": tg_msg, "parse_mode": "HTML", "disable_web_page_preview": True}, timeout=10)
+
+        if is_scheduled_slot:
+            with open("last_sent.txt", "w", encoding="utf-8") as lf:
+                lf.write(slot_key)
 
 if __name__ == "__main__":
     main()
