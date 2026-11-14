@@ -85,6 +85,18 @@ KEY_EVENTS = [
     {"date": "2027-01-22", "cat": "DRAM", "title": "SK하이닉스 2026 4Q 실적발표 (HBM3E·HBM4 가이던스)"}
 ]
 
+def detect_cloudflare_worker_url():
+    if not TOKEN:
+        return ""
+    try:
+        r = requests.get(f"https://api.telegram.org/bot{TOKEN}/getWebhookInfo", timeout=6).json()
+        w_url = r.get("result", {}).get("url", "").strip()
+        if w_url.startswith("https://"):
+            return w_url.split("?")[0]
+    except Exception:
+        pass
+    return ""
+
 def ensure_korean_fonts():
     reg_path = "NanumGothic-Regular.ttf"
     bold_path = "NanumGothic-Bold.ttf"
@@ -420,9 +432,11 @@ def evaluate_new_tranches(price_map, krw_rate):
             if not is_live:
                 badge_html = '<span class="tr-badge tr-sim">🧪 모의 프리뷰</span>'
                 status_str = f"진입가 {p_fmt(entry_p)} 가정 시뮬레이션"
+                id_attr = ""
             else:
                 badge_html = '<span class="tr-badge tr-live">🟢 실전 LIVE</span>'
                 status_str = f"1차 반등선({p_fmt(half_target_p)}) 303주 예약매도 권장"
+                id_attr = 'id="live-tranche-card"'
                 if curr_p <= stop_p:
                     status_str = f"🚨 트레일링 스탑 도달! ({p_fmt(stop_p)} 이하 매도)"
                     exit_alert = True
@@ -440,30 +454,30 @@ def evaluate_new_tranches(price_map, krw_rate):
 
             ret_cls = "pos" if ret_entry >= 0 else "neg"
             cards_html.append(f"""
-                <div class="tr-box">
+                <div class="tr-box" {id_attr}>
                     <div class="sig-hd">
                         <div><b>{tr['name']}</b> ({qty:,}주) {badge_html}</div>
-                        <div class="{ret_cls}" style="font-size:0.9rem;">{ret_entry:+.2f}%</div>
+                        <div class="{ret_cls}" id="{'tr-live-ret' if is_live else ''}" style="font-size:0.9rem;">{ret_entry:+.2f}%</div>
                     </div>
                     <div class="range-wrap">
                         <div class="range-labels">
-                            <span class="neg">🛡️스탑 {p_fmt(stop_p)}</span>
-                            <span style="color:#38bdf8;font-weight:bold;">현재 {p_fmt(curr_p)}</span>
-                            <span class="pos">🎯목표 {p_fmt(target_p)}</span>
+                            <span class="neg" id="{'tr-live-stop' if is_live else ''}">🛡️스탑 {p_fmt(stop_p)}</span>
+                            <span style="color:#38bdf8;font-weight:bold;" id="{'tr-live-curr' if is_live else ''}">현재 {p_fmt(curr_p)}</span>
+                            <span class="pos" id="{'tr-live-target' if is_live else ''}">🎯목표 {p_fmt(target_p)}</span>
                         </div>
                         <div class="range-track">
-                            <div class="range-fill" style="width:{pos_pct}%;"></div>
-                            <div class="range-dot" style="left:{pos_pct}%;"></div>
+                            <div class="range-fill" id="{'tr-live-fill' if is_live else ''}" style="width:{pos_pct}%;"></div>
+                            <div class="range-dot" id="{'tr-live-dot' if is_live else ''}" style="left:{pos_pct}%;"></div>
                         </div>
                         <div class="range-Labels-sub">
-                            <span>스탑까지 -{dist_to_stop:.1f}% 여유</span>
-                            <span>익절까지 +{dist_to_target:.1f}% 남음</span>
+                            <span id="{'tr-live-dist-stop' if is_live else ''}">스탑까지 -{dist_to_stop:.1f}% 여유</span>
+                            <span id="{'tr-live-dist-target' if is_live else ''}">익절까지 +{dist_to_target:.1f}% 남음</span>
                         </div>
                     </div>
                     <div class="tr-ft">
-                        <span>단독 손익: <b class="{ret_cls}">{pnl_str}</b> (원금 {cost_krw//10000:,}만)</span>
+                        <span>단독 손익: <b class="{ret_cls}" id="{'tr-live-pnl' if is_live else ''}">{pnl_str}</b> (원금 {cost_krw//10000:,}만)</span>
                     </div>
-                    <div class="sub" style="margin-top:4px;">💡 {blended_note} | {status_str}</div>
+                    <div class="sub" style="margin-top:4px;">💡 {blended_note} | <span id="{'tr-live-status' if is_live else ''}">{status_str}</span></div>
                 </div>""")
 
             if is_live:
@@ -497,12 +511,10 @@ def generate_dashboard_png(out_path, now_str, krw_p, total_eval_krw, total_pnl_k
     img = Image.new("RGB", (W, H), "#070b14")
     draw = ImageDraw.Draw(img)
 
-    # 1. 상단 헤더
-    draw.text((28, 20), "마스터 비주얼 관제탑 V6.2", font=f_title, fill="#38bdf8")
+    draw.text((28, 20), "마스터 비주얼 관제탑 V7.0", font=f_title, fill="#38bdf8")
     sync_txt = f"동기화: {now_str} | 환율 ₩{krw_p:,.1f}"
     draw.text((W - 28, 26), sync_txt, font=f_sub, fill="#94a3b8", anchor="ra")
 
-    # 2. 상단 2x2 KPI 카드
     pnl_col = "#4ade80" if total_pnl_krw >= 0 else "#f87171"
     kpis = [
         ("총 평가자산 (1차목표 15,131만)", f"{total_eval_krw//10000:,}만 원", f"1차 전환선까지 {max(0, 15131 - total_eval_krw//10000):,}만 원", "#38bdf8"),
@@ -520,7 +532,6 @@ def generate_dashboard_png(out_path, now_str, krw_p, total_eval_krw, total_pnl_k
         draw.text((x0 + 207, y0 + 35), val, font=f_kpi_val, fill=col, anchor="ma")
         draw.text((x0 + 207, y0 + 66), sub, font=f_kpi_sub, fill="#64748b", anchor="ma")
 
-    # 3. 글로벌 반도체·HBM 4대 풍향계 바 (엔비디아 · 마이크론 · 삼성전자 · SK하이닉스)
     py0 = 272
     draw.text((28, py0), "글로벌 반도체 · HBM 풍향계 (RAM 선행지표)", font=f_sec, fill="#fbbf24")
     for idx, sp in enumerate(semi_peers):
@@ -533,7 +544,6 @@ def generate_dashboard_png(out_path, now_str, krw_p, total_eval_krw, total_pnl_k
         draw.text((sx1 - 12, sy0_box + 10), f"{sp['pct']:+.2f}%", font=f_card_r, fill=p_col, anchor="ra")
         draw.text((sx0 + 14, sy0_box + 34), sp["price_str"], font=f_card_b, fill="#f8fafc")
 
-    # 4. 신규 스윙 트랑셰 위치 게이지 박스 (RAM 606주)
     ty0 = 376
     ty1 = ty0 + 154
     draw.rounded_rectangle([28, ty0, W - 28, ty1], radius=14, fill="#142038", outline="#2dd4bf", width=2)
@@ -562,7 +572,6 @@ def generate_dashboard_png(out_path, now_str, krw_p, total_eval_krw, total_pnl_k
         foot_txt = f"단독손익: {live_tr['pnl_str']}  |  {live_tr['blended_note']}  |  {live_tr['status_str']}"
         draw.text((48, ty0 + 114), foot_txt, font=f_card_r, fill="#e2e8f0")
 
-    # 5. 5대 종목 4중 검증 스위치 & 20일 추세 스파크라인
     sy0 = 546
     draw.text((28, sy0), "5대 보유 종목 4중 검증 스위치 & 20일 주가 추세", font=f_sec, fill="#38bdf8")
 
@@ -616,7 +625,6 @@ def generate_dashboard_png(out_path, now_str, krw_p, total_eval_krw, total_pnl_k
 
         row_y += 118
 
-    # 6. 하단 핵심 일정 D-Day 바
     dy0 = row_y + 6
     draw.rounded_rectangle([28, dy0, W - 28, H - 18], radius=12, fill="#111827", outline="#1f2937", width=2)
     draw.text((48, dy0 + 12), "임박 핵심 일정 D-Day:", font=f_card_b, fill="#fbbf24")
@@ -666,16 +674,16 @@ def get_latest_strict_news(query, tag, max_items=2, max_hours=48):
         pass
     return items
 
-def render_quick_tile(short_name, m):
+def render_quick_tile(key_id, short_name, m):
     tile_cls = "q-buy" if m["alert"] else ("q-hot" if "🚨" in m["sig"] else "q-wait")
     return f"""
-        <div class="q-tile {tile_cls}">
+        <div class="q-tile {tile_cls}" id="q-tile-{key_id}">
             <div class="q-name">{short_name}</div>
-            <div class="q-score">{m['blocks']}</div>
-            <div class="q-st">{m['short_st']}</div>
+            <div class="q-score" id="q-score-{key_id}">{m['blocks']}</div>
+            <div class="q-st" id="q-st-{key_id}">{m['short_st']}</div>
         </div>"""
 
-def render_sig_card(title, price_badge, my_ret_str, m, border_color):
+def render_sig_card(key_id, title, price_badge, my_ret_str, m, border_color):
     sig_color = "pos" if m["alert"] else ("neg" if "🚨" in m["sig"] else "")
     bar_w = int((m["score"] / 4.0) * 100)
     bar_color = "#4ade80" if m["alert"] else ("#f87171" if "🚨" in m["sig"] else "#38bdf8")
@@ -690,27 +698,27 @@ def render_sig_card(title, price_badge, my_ret_str, m, border_color):
         <div class="sig-box" style="border-left-color:{border_color};">
             <div class="sig-hd">
                 <div>
-                    <b>{title}</b> {price_badge}<br>
-                    <span class="sub">20일 추세 &amp; 내 수익:</span> {my_ret_str}
+                    <b>{title}</b> <span id="sig-price-{key_id}">{price_badge}</span><br>
+                    <span class="sub">20일 추세 &amp; 내 수익:</span> <span id="sig-ret-{key_id}">{my_ret_str}</span>
                 </div>
-                <div style="text-align:right;">{spark_svg}</div>
+                <div style="text-align:right;" id="sig-spark-{key_id}">{spark_svg}</div>
             </div>
-            <div class="bar-bg"><div class="bar-fill" style="width:{bar_w}%;background:{bar_color};"></div></div>
+            <div class="bar-bg"><div class="bar-fill" id="sig-bar-{key_id}" style="width:{bar_w}%;background:{bar_color};"></div></div>
             <div class="metric-grid">
-                <div class="m-cell"><span class="sub">RSI(14)</span><br><b>{m['rsi']:.1f}</b> <span class="sub">({m['rsi_cut']:.0f})</span></div>
-                <div class="m-cell"><span class="sub">20일 이격</span><br><b>{m['disp']:+.1f}%</b> <span class="sub">({m['disp_cut']:.0f}%)</span></div>
-                <div class="m-cell"><span class="sub">볼린저 %B</span><br><b>{m['pct_b']:.2f}</b></div>
-                <div class="m-cell"><span class="sub">거래량</span><br><b>{m['vol_ratio']:.1f}배</b></div>
+                <div class="m-cell"><span class="sub">RSI(14)</span><br><b id="sig-rsi-{key_id}">{m['rsi']:.1f}</b> <span class="sub">({m['rsi_cut']:.0f})</span></div>
+                <div class="m-cell"><span class="sub">20일 이격</span><br><b id="sig-disp-{key_id}">{m['disp']:+.1f}%</b> <span class="sub">({m['disp_cut']:.0f}%)</span></div>
+                <div class="m-cell"><span class="sub">볼린저 %B</span><br><b id="sig-pctb-{key_id}">{m['pct_b']:.2f}</b></div>
+                <div class="m-cell"><span class="sub">거래량</span><br><b id="sig-vol-{key_id}">{m['vol_ratio']:.1f}배</b></div>
             </div>
             <div class="pill-row">
-                <span class="pill {p1_cls}">{'🟢' if m['c1'] else '⚫'} 과매도</span>
-                <span class="pill {p2_cls}">{'🟢' if m['c2'] else '⚫'} 지지선</span>
-                <span class="pill {p3_cls}">{'🟢' if m['c3'] else '⚫'} MACD↑</span>
-                <span class="pill {p4_cls}">{'🟢' if m['c4'] else '⚫'} 수급유입</span>
+                <span class="pill {p1_cls}" id="sig-p1-{key_id}">{'🟢' if m['c1'] else '⚫'} 과매도</span>
+                <span class="pill {p2_cls}" id="sig-p2-{key_id}">{'🟢' if m['c2'] else '⚫'} 지지선</span>
+                <span class="pill {p3_cls}" id="sig-p3-{key_id}">{'🟢' if m['c3'] else '⚫'} MACD↑</span>
+                <span class="pill {p4_cls}" id="sig-p4-{key_id}">{'🟢' if m['c4'] else '⚫'} 수급유입</span>
             </div>
             <div class="sig-ft">
-                <span class="{sig_color}">{m['sig']}</span>
-                <span class="warn">➔ {m['cash']}</span>
+                <span class="{sig_color}" id="sig-txt-{key_id}">{m['sig']}</span>
+                <span class="warn" id="sig-cash-{key_id}">➔ {m['cash']}</span>
             </div>
         </div>"""
 
@@ -718,6 +726,7 @@ def main():
     now_kst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
     now_str = now_kst.strftime("%Y-%m-%d %H:%M KST")
 
+    worker_api_url = detect_cloudflare_worker_url()
     dday_html, dday_tg, img_events = build_dday_section(now_kst)
     semi_peers = fetch_semi_peers()
 
@@ -785,46 +794,46 @@ def main():
     ab_color = "pos" if ab['ret_pct'] >= 0 else "neg"
 
     semi_bar_html = "".join([
-        f'<div class="semi-tile"><div class="semi-top"><span>{sp["name"]}</span><span class="{"pos" if sp["pct"]>=0 else "neg"}">{sp["pct"]:+.2f}%</span></div><div class="semi-val">{sp["price_str"]}</div></div>'
-        for sp in semi_peers
+        f'<div class="semi-tile" id="semi-tile-{idx}"><div class="semi-top"><span>{sp["name"]}</span><span class="{"pos" if sp["pct"]>=0 else "neg"}" id="semi-pct-{idx}">{sp["pct"]:+.2f}%</span></div><div class="semi-val" id="semi-val-{idx}">{sp["price_str"]}</div></div>'
+        for idx, sp in enumerate(semi_peers)
     ])
     semi_tg_str = " | ".join([f"<b>{sp['name']}</b> {sp['pct']:+.1f}%" for sp in semi_peers])
 
     quick_bar_html = (
-        render_quick_tile("RAM", ram) +
-        render_quick_tile("코스닥레버", kq) +
-        render_quick_tile("와이지-원", yg) +
-        render_quick_tile("오름테라", or1) +
-        render_quick_tile("앱클론", ab)
+        render_quick_tile("ram", "RAM", ram) +
+        render_quick_tile("kq", "코스닥레버", kq) +
+        render_quick_tile("yg", "와이지-원", yg) +
+        render_quick_tile("or1", "오름테라", or1) +
+        render_quick_tile("ab", "앱클론", ab)
     )
 
     sig_cards_html = (
         render_sig_card(
-            "🇺🇸 RAM (합산 6,460주)",
+            "ram", "🇺🇸 RAM (합산 6,460주)",
             f'<span class="badge">{ram["session"]}</span> <span class="sub">${ram_p:.2f} ({ram["pct"]:+.2f}%)</span>',
             f'<span class="{ram_color}">{ram_total_ret:+.1f}% (평단 $9.69)</span>',
             ram, "#38bdf8"
         ) +
         render_sig_card(
-            "🇰🇷 KODEX 코스닥150레버리지",
+            "kq", "🇰🇷 KODEX 코스닥150레버리지",
             f'<span class="sub">₩{kq["curr"]:,.0f} ({kq["pct"]:+.2f}%)</span>',
             f'<span class="{kq_color}">{kq["ret_pct"]:+.1f}%</span>',
             kq, "#f87171"
         ) +
         render_sig_card(
-            "🔧 와이지-원",
+            "yg", "🔧 와이지-원",
             f'<span class="sub">₩{yg["curr"]:,.0f} ({yg["pct"]:+.2f}%)</span>',
             f'<span class="{yg_color}">{yg["ret_pct"]:+.1f}%</span>',
             yg, "#fbbf24"
         ) +
         render_sig_card(
-            "🧬 오름테라퓨틱",
+            "or1", "🧬 오름테라퓨틱",
             f'<span class="sub">₩{or1["curr"]:,.0f} ({or1["pct"]:+.2f}%)</span>',
             f'<span class="{or1_color}">{or1["ret_pct"]:+.1f}%</span>',
             or1, "#c084fc"
         ) +
         render_sig_card(
-            "🧬 앱클론",
+            "ab", "🧬 앱클론",
             f'<span class="sub">₩{ab["curr"]:,.0f} ({ab["pct"]:+.2f}%)</span>',
             f'<span class="{ab_color}">{ab["ret_pct"]:+.1f}%</span>',
             ab, "#4ade80"
@@ -836,20 +845,22 @@ def main():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <meta http-equiv="refresh" content="1800">
-    <title>마스터 관제탑 V6.2</title>
+    <title>마스터 관제탑 V7.0 LIVE</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {{ font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #070b14; color: #f8fafc; margin: 0; padding: 12px; max-width: 600px; margin: auto; }}
-        .top-hd {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }}
-        .top-title {{ font-size: 1.1rem; font-weight: 800; color: #38bdf8; }}
+        .top-hd {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }}
+        .top-title {{ font-size: 1.05rem; font-weight: 800; color: #38bdf8; }}
+        .live-bar {{ display: flex; justify-content: space-between; align-items: center; background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 6px 10px; margin-bottom: 10px; }}
         .top-sync {{ font-size: 0.72rem; color: #94a3b8; }}
+        .btn-refresh {{ background: #0284c7; color: #fff; border: none; border-radius: 6px; padding: 5px 10px; font-size: 0.72rem; font-weight: bold; cursor: pointer; }}
+        .btn-refresh:active {{ opacity: 0.8; }}
         .kpi-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }}
         .kpi-box {{ background: linear-gradient(145deg, #131c31, #0f172a); border: 1px solid #1e293b; border-radius: 10px; padding: 10px; text-align: center; }}
         .kpi-lbl {{ font-size: 0.71rem; color: #94a3b8; margin-bottom: 3px; }}
         .kpi-val {{ font-size: 1.02rem; font-weight: 800; color: #f8fafc; }}
         .kpi-sub {{ font-size: 0.68rem; color: #64748b; margin-top: 2px; }}
-        .semi-hd {{ font-size: 0.75rem; font-weight: 700; color: #fbbf24; margin-bottom: 5px; }}
+        .semi-hd {{ font-size: 0.75rem; font-weight: 700; color: #fbbf24; margin-bottom: 5px; display: flex; justify-content: space-between; }}
         .semi-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }}
         .semi-tile {{ background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 7px 6px; }}
         .semi-top {{ display: flex; justify-content: space-between; font-size: 0.68rem; color: #cbd5e1; margin-bottom: 3px; }}
@@ -905,34 +916,42 @@ def main():
 </head>
 <body>
     <div class="top-hd">
-        <div class="top-title">🛡️ 마스터 비주얼 관제탑 V6.2</div>
-        <div class="top-sync">동기화: {now_str} (₩{krw_p:,.1f})</div>
+        <div class="top-title">🛡️ 마스터 비주얼 관제탑 V7.0</div>
+        <a href="dashboard_card.png" target="_blank" style="font-size:0.72rem;color:#2dd4bf;border:1px solid #2dd4bf;padding:3px 8px;border-radius:5px;">🖼️ 요약이미지 보기</a>
+    </div>
+
+    <div class="live-bar">
+        <div class="top-sync" id="top-sync-text">스냅샷: {now_str} (₩{krw_p:,.1f})</div>
+        <button class="btn-refresh" id="btn-live-refresh" onclick="fetchLiveDashboard()">🔄 실시간 시세 새로고침</button>
     </div>
 
     <div class="kpi-grid">
         <div class="kpi-box">
             <div class="kpi-lbl">총 평가자산 (1차목표 15,131만)</div>
-            <div class="kpi-val" style="color:#38bdf8;">{total_eval_krw//10000:,}만 원</div>
-            <div class="kpi-sub">1차 전환선까지 {max(0, 15131 - total_eval_krw//10000):,}만 원</div>
+            <div class="kpi-val" id="kpi-total-eval" style="color:#38bdf8;">{total_eval_krw//10000:,}만 원</div>
+            <div class="kpi-sub" id="kpi-total-sub">1차 전환선까지 {max(0, 15131 - total_eval_krw//10000):,}만 원</div>
         </div>
         <div class="kpi-box">
             <div class="kpi-lbl">원화 환산 총 평가손익</div>
-            <div class="kpi-val {pnl_color}">{total_pnl_krw//10000:+,}만 원</div>
-            <div class="kpi-sub">{total_pnl_krw:+,}원</div>
+            <div class="kpi-val {pnl_color}" id="kpi-total-pnl">{total_pnl_krw//10000:+,}만 원</div>
+            <div class="kpi-sub" id="kpi-total-pnl-sub">{total_pnl_krw:+,}원</div>
         </div>
         <div class="kpi-box">
             <div class="kpi-lbl">보유 주식 합산 수익률</div>
-            <div class="kpi-val {pnl_color}">{stock_ret_pct:+.2f}%</div>
-            <div class="kpi-sub">현금포함 총자산 {total_asset_ret_pct:+.2f}%</div>
+            <div class="kpi-val {pnl_color}" id="kpi-stock-ret">{stock_ret_pct:+.2f}%</div>
+            <div class="kpi-sub" id="kpi-asset-ret">현금포함 총자산 {total_asset_ret_pct:+.2f}%</div>
         </div>
         <div class="kpi-box">
             <div class="kpi-lbl">주식 평가액 / 잔여 현금</div>
-            <div class="kpi-val">{stock_eval_krw//10000:,}만 / <span style="color:#4ade80;">{rem_cash_eval//10000:,}만</span></div>
+            <div class="kpi-val" id="kpi-stock-cash">{stock_eval_krw//10000:,}만 / <span style="color:#4ade80;">{rem_cash_eval//10000:,}만</span></div>
             <div class="kpi-sub">RAM 1차(606주) 실전 감시 중</div>
         </div>
     </div>
 
-    <div class="semi-hd">⚡ 글로벌 반도체 · HBM 4대 풍향계 (RAM 선행지표)</div>
+    <div class="semi-hd">
+        <span>⚡ 글로벌 반도체 · HBM 4대 풍향계 (RAM 선행지표)</span>
+        <span id="live-status-badge" style="color:#4ade80;">● LIVE 자동연동</span>
+    </div>
     <div class="semi-grid">
         {semi_bar_html}
     </div>
@@ -959,18 +978,20 @@ def main():
     <div class="card">
         <h2>💼 보유 종목 상세 평가 &amp; 포트폴리오 비중</h2>
         <div style="width:210px;margin:0 auto 12px auto;"><canvas id="pfChart"></canvas></div>
-        <div class="row"><span><b>RAM 합산</b> (6,460주 · 평단 $9.6926) <span class="badge">{ram['session']}</span><br><span class="sub">기존 5,854주($10.08) + 신규 606주($5.97) | 현재 ${ram_p:.2f}</span></span><span class="{ram_color}" style="text-align:right;">{ram_total_ret:+.2f}% ({(ram_pnl_krw + live_tr_pnl)//10000:+,}만)<br>${ram_p * ram_total_qty:,.0f} ({ram_combined_eval_krw//10000:,}만)</span></div>
-        <div class="row"><span><b>코스닥150레버리지</b> (3,354주 · 평단 6,152원)<br><span class="sub">현재 ₩{kq['curr']:,.0f} ({kq['pct']:+.2f}%)</span></span><span class="{kq_color}" style="text-align:right;">{kq['ret_pct']:+.2f}% ({kq['pnl_krw']//10000:+,}만)<br>{kq['eval_krw']:,}원</span></div>
-        <div class="row"><span><b>와이지-원</b> (656주 · 평단 12,910원)<br><span class="sub">현재 ₩{yg['curr']:,.0f} ({yg['pct']:+.2f}%)</span></span><span class="{yg_color}" style="text-align:right;">{yg['ret_pct']:+.2f}% ({yg['pnl_krw']//10000:+,}만)<br>{yg['eval_krw']:,}원</span></div>
-        <div class="row"><span><b>오름테라퓨틱(계좌1)</b> (1,097주 · 평단 107,113원)<br><span class="sub">현재 ₩{or1['curr']:,.0f} ({or1['pct']:+.2f}%)</span></span><span class="{or1_color}" style="text-align:right;">{or1['ret_pct']:+.2f}% ({or1['pnl_krw']//10000:+,}만)<br>{or1['eval_krw']:,}원</span></div>
-        <div class="row"><span><b>오름테라퓨틱(계좌2)</b> (256주 · 평단 96,650원)<br><span class="sub">현재 ₩{or2['curr']:,.0f} ({or2['pct']:+.2f}%)</span></span><span class="{or2_color}" style="text-align:right;">{or2['ret_pct']:+.2f}% ({or2['pnl_krw']//10000:+,}만)<br>{or2['eval_krw']:,}원</span></div>
-        <div class="row"><span><b>앱클론</b> (256주 · 평단 52,735원)<br><span class="sub">현재 ₩{ab['curr']:,.0f} ({ab['pct']:+.2f}%)</span></span><span class="{ab_color}" style="text-align:right;">{ab['ret_pct']:+.2f}% ({ab['pnl_krw']//10000:+,}만)<br>{ab['eval_krw']:,}원</span></div>
+        <div class="row"><span><b>RAM 합산</b> (6,460주 · 평단 $9.6926) <span class="badge" id="hold-ram-sess">{ram['session']}</span><br><span class="sub" id="hold-ram-sub">기존 5,854주($10.08) + 신규 606주($5.97) | 현재 ${ram_p:.2f}</span></span><span class="{ram_color}" id="hold-ram-val" style="text-align:right;">{ram_total_ret:+.2f}% ({(ram_pnl_krw + live_tr_pnl)//10000:+,}만)<br>${ram_p * ram_total_qty:,.0f} ({ram_combined_eval_krw//10000:,}만)</span></div>
+        <div class="row"><span><b>코스닥150레버리지</b> (3,354주 · 평단 6,152원)<br><span class="sub" id="hold-kq-sub">현재 ₩{kq['curr']:,.0f} ({kq['pct']:+.2f}%)</span></span><span class="{kq_color}" id="hold-kq-val" style="text-align:right;">{kq['ret_pct']:+.2f}% ({kq['pnl_krw']//10000:+,}만)<br>{kq['eval_krw']:,}원</span></div>
+        <div class="row"><span><b>와이지-원</b> (656주 · 평단 12,910원)<br><span class="sub" id="hold-yg-sub">현재 ₩{yg['curr']:,.0f} ({yg['pct']:+.2f}%)</span></span><span class="{yg_color}" id="hold-yg-val" style="text-align:right;">{yg['ret_pct']:+.2f}% ({yg['pnl_krw']//10000:+,}만)<br>{yg['eval_krw']:,}원</span></div>
+        <div class="row"><span><b>오름테라퓨틱(계좌1)</b> (1,097주 · 평단 107,113원)<br><span class="sub" id="hold-or1-sub">현재 ₩{or1['curr']:,.0f} ({or1['pct']:+.2f}%)</span></span><span class="{or1_color}" id="hold-or1-val" style="text-align:right;">{or1['ret_pct']:+.2f}% ({or1['pnl_krw']//10000:+,}만)<br>{or1['eval_krw']:,}원</span></div>
+        <div class="row"><span><b>오름테라퓨틱(계좌2)</b> (256주 · 평단 96,650원)<br><span class="sub" id="hold-or2-sub">현재 ₩{or2['curr']:,.0f} ({or2['pct']:+.2f}%)</span></span><span class="{or2_color}" id="hold-or2-val" style="text-align:right;">{or2['ret_pct']:+.2f}% ({or2['pnl_krw']//10000:+,}만)<br>{or2['eval_krw']:,}원</span></div>
+        <div class="row"><span><b>앱클론</b> (256주 · 평단 52,735원)<br><span class="sub" id="hold-ab-sub">현재 ₩{ab['curr']:,.0f} ({ab['pct']:+.2f}%)</span></span><span class="{ab_color}" id="hold-ab-val" style="text-align:right;">{ab['ret_pct']:+.2f}% ({ab['pnl_krw']//10000:+,}만)<br>{ab['eval_krw']:,}원</span></div>
     </div>
 
     <div class="card"><h2>📰 최근 48시간 최신 속보</h2>{news_html}</div>
 
     <script>
-        new Chart(document.getElementById('pfChart'), {{
+        const WORKER_API_URL = "{worker_api_url}";
+
+        const pfChart = new Chart(document.getElementById('pfChart'), {{
             type: 'doughnut',
             data: {{
                 labels: ['RAM(반도체 6,460주)', '바이오(오름·앱클론)', '코스닥150레버리지', '잔여현금', '와이지-원'],
@@ -981,6 +1002,153 @@ def main():
                 }}]
             }},
             options: {{ plugins: {{ legend: {{ position: 'bottom', labels: {{ color: '#cbd5e1', font: {{ size: 11 }} }} }} }}, cutout: '62%' }}
+        }});
+
+        function fmtMan(v) {{
+            const m = Math.round(v / 10000);
+            return (m >= 0 ? "+" : "") + m.toLocaleString() + "만";
+        }}
+
+        function updateSigCardDOM(keyId, m, priceHtml, retHtml) {{
+            const setEl = (id, html) => {{ const e = document.getElementById(id); if (e) e.innerHTML = html; }};
+            setEl("q-score-" + keyId, m.blocks);
+            setEl("q-st-" + keyId, m.shortSt);
+            const qt = document.getElementById("q-tile-" + keyId);
+            if (qt) qt.className = "q-tile " + (m.alert ? "q-buy" : (m.rsi > 72 ? "q-hot" : "q-wait"));
+
+            setEl("sig-price-" + keyId, priceHtml);
+            setEl("sig-ret-" + keyId, retHtml);
+            setEl("sig-rsi-" + keyId, m.rsi.toFixed(1));
+            setEl("sig-disp-" + keyId, (m.disp >= 0 ? "+" : "") + m.disp.toFixed(1) + "%");
+            setEl("sig-pctb-" + keyId, m.pctB.toFixed(2));
+            setEl("sig-vol-" + keyId, m.volRatio.toFixed(1) + "배");
+
+            const bar = document.getElementById("sig-bar-" + keyId);
+            if (bar) {{
+                bar.style.width = Math.round((m.score / 4) * 100) + "%";
+                bar.style.background = m.alert ? "#4ade80" : (m.rsi > 72 ? "#f87171" : "#38bdf8");
+            }}
+
+            const setPill = (pIdx, isOn, lbl) => {{
+                const p = document.getElementById("sig-p" + pIdx + "-" + keyId);
+                if (p) {{
+                    p.className = "pill " + (isOn ? "pill-on" : "pill-off");
+                    p.textContent = (isOn ? "🟢 " : "⚫ ") + lbl;
+                }}
+            }};
+            setPill(1, m.c1, "과매도");
+            setPill(2, m.c2, "지지선");
+            setPill(3, m.c3, "MACD↑");
+            setPill(4, m.c4, "수급유입");
+
+            const stxt = document.getElementById("sig-txt-" + keyId);
+            if (stxt) {{
+                stxt.className = m.alert ? "pos" : (m.rsi > 72 ? "neg" : "");
+                stxt.textContent = m.sig;
+            }}
+            setEl("sig-cash-" + keyId, "➔ " + m.cash);
+        }}
+
+        async function fetchLiveDashboard() {{
+            if (!WORKER_API_URL) return;
+            const btn = document.getElementById("btn-live-refresh");
+            const badge = document.getElementById("live-status-badge");
+            if (btn) btn.textContent = "⏳ 실시간 수신 중...";
+            if (badge) badge.textContent = "⏳ 실시간 시세 조회 중...";
+
+            try {{
+                const res = await fetch(WORKER_API_URL + "?mode=live&t=" + Date.now());
+                const d = await res.json();
+
+                document.getElementById("top-sync-text").textContent = "🟢 실시간: " + d.nowStr + " (₩" + d.krwRate.toFixed(1) + ")";
+                document.getElementById("kpi-total-eval").textContent = Math.round(d.kpi.totalEvalKrw / 10000).toLocaleString() + "만 원";
+                document.getElementById("kpi-total-sub").textContent = "1차 전환선까지 " + Math.max(0, 15131 - Math.round(d.kpi.totalEvalKrw / 10000)).toLocaleString() + "만 원";
+
+                const pnlEl = document.getElementById("kpi-total-pnl");
+                pnlEl.textContent = fmtMan(d.kpi.totalPnlKrw) + " 원";
+                pnlEl.className = "kpi-val " + (d.kpi.totalPnlKrw >= 0 ? "pos" : "neg");
+                document.getElementById("kpi-total-pnl-sub").textContent = (d.kpi.totalPnlKrw >= 0 ? "+" : "") + d.kpi.totalPnlKrw.toLocaleString() + "원";
+
+                const sRetEl = document.getElementById("kpi-stock-ret");
+                sRetEl.textContent = (d.kpi.stockRetPct >= 0 ? "+" : "") + d.kpi.stockRetPct.toFixed(2) + "%";
+                sRetEl.className = "kpi-val " + (d.kpi.stockRetPct >= 0 ? "pos" : "neg");
+                document.getElementById("kpi-asset-ret").textContent = "현금포함 총자산 " + (d.kpi.totalAssetRetPct >= 0 ? "+" : "") + d.kpi.totalAssetRetPct.toFixed(2) + "%";
+                document.getElementById("kpi-stock-cash").innerHTML = Math.round(d.kpi.stockEvalKrw / 10000).toLocaleString() + "만 / <span style='color:#4ade80;'>" + Math.round(d.kpi.remCashKrw / 10000).toLocaleString() + "만</span>";
+
+                d.semiPeers.forEach((sp, idx) => {{
+                    const pEl = document.getElementById("semi-pct-" + idx);
+                    const vEl = document.getElementById("semi-val-" + idx);
+                    if (pEl) {{
+                        pEl.textContent = (sp.pct >= 0 ? "+" : "") + sp.pct.toFixed(2) + "%";
+                        pEl.className = sp.pct >= 0 ? "pos" : "neg";
+                    }}
+                    if (vEl) vEl.textContent = sp.pStr;
+                }});
+
+                const tr = d.tranche;
+                if (tr) {{
+                    const trRet = document.getElementById("tr-live-ret");
+                    if (trRet) {{
+                        trRet.textContent = (tr.retPct >= 0 ? "+" : "") + tr.retPct.toFixed(2) + "%";
+                        trRet.className = tr.retPct >= 0 ? "pos" : "neg";
+                    }}
+                    document.getElementById("tr-live-stop").textContent = "🛡️스탑 $" + tr.stopP.toFixed(2);
+                    document.getElementById("tr-live-curr").textContent = "현재 $" + tr.currP.toFixed(2);
+                    document.getElementById("tr-live-target").textContent = "🎯목표 $" + tr.targetP.toFixed(2);
+                    document.getElementById("tr-live-fill").style.width = tr.posPct + "%";
+                    document.getElementById("tr-live-dot").style.left = tr.posPct + "%";
+                    document.getElementById("tr-live-dist-stop").textContent = "스탑까지 -" + tr.distStop.toFixed(1) + "% 여유";
+                    document.getElementById("tr-live-dist-target").textContent = "익절까지 +" + tr.distTarget.toFixed(1) + "% 남음";
+                    const trPnl = document.getElementById("tr-live-pnl");
+                    if (trPnl) {{
+                        trPnl.textContent = (tr.pnlUsd >= 0 ? "+" : "") + tr.pnlUsd.toFixed(1) + "달러 (" + fmtMan(tr.pnlKrw) + " 원)";
+                        trPnl.className = tr.retPct >= 0 ? "pos" : "neg";
+                    }}
+                    document.getElementById("tr-live-status").textContent = tr.status;
+                }}
+
+                const s = d.stocks;
+                updateSigCardDOM("ram", s.ram, `<span class="badge">${{s.ram.session}}</span> <span class="sub">$${{s.ram.price.toFixed(2)}} (${{(s.ram.pct>=0?'+':'') + s.ram.pct.toFixed(2)}}%)</span>`, `<span class="${{s.ram.totalRet>=0?'pos':'neg'}}">${{(s.ram.totalRet>=0?'+':'') + s.ram.totalRet.toFixed(1)}}% (평단 $9.69)</span>`);
+                updateSigCardDOM("kq", s.kq, `<span class="sub">₩${{Math.round(s.kq.price).toLocaleString()}} (${{(s.kq.pct>=0?'+':'') + s.kq.pct.toFixed(2)}}%)</span>`, `<span class="${{s.kq.ret>=0?'pos':'neg'}}">${{s.kq.ret.toFixed(1)}}%</span>`);
+                updateSigCardDOM("yg", s.yg, `<span class="sub">₩${{Math.round(s.yg.price).toLocaleString()}} (${{(s.yg.pct>=0?'+':'') + s.yg.pct.toFixed(2)}}%)</span>`, `<span class="${{s.yg.ret>=0?'pos':'neg'}}">${{s.yg.ret.toFixed(1)}}%</span>`);
+                updateSigCardDOM("or1", s.or1, `<span class="sub">₩${{Math.round(s.or1.price).toLocaleString()}} (${{(s.or1.pct>=0?'+':'') + s.or1.pct.toFixed(2)}}%)</span>`, `<span class="${{s.or1.ret>=0?'pos':'neg'}}">${{s.or1.ret.toFixed(1)}}%</span>`);
+                updateSigCardDOM("ab", s.ab, `<span class="sub">₩${{Math.round(s.ab.price).toLocaleString()}} (${{(s.ab.pct>=0?'+':'') + s.ab.pct.toFixed(2)}}%)</span>`, `<span class="${{s.ab.ret>=0?'pos':'neg'}}">${{s.ab.ret.toFixed(1)}}%</span>`);
+
+                document.getElementById("hold-ram-sess").textContent = s.ram.session;
+                document.getElementById("hold-ram-sub").textContent = `기존 5,854주($10.08) + 신규 606주($5.97) | 현재 $${{s.ram.price.toFixed(2)}}`;
+                document.getElementById("hold-ram-val").innerHTML = `${{(s.ram.totalRet>=0?'+':'') + s.ram.totalRet.toFixed(2)}}% (${{fmtMan(s.ram.pnlKrw)}})<br>$${{Math.round(s.ram.evalUsd).toLocaleString()}} (${{Math.round(s.ram.evalKrw/10000).toLocaleString()}}만)`;
+
+                const updKrHold = (k, obj) => {{
+                    document.getElementById("hold-" + k + "-sub").textContent = `현재 ₩${{Math.round(obj.price).toLocaleString()}} (${{(obj.pct>=0?'+':'') + obj.pct.toFixed(2)}}%)`;
+                    document.getElementById("hold-" + k + "-val").innerHTML = `${{obj.ret.toFixed(2)}}% (${{fmtMan(obj.pnl)}})<br>${{obj.evalAmt.toLocaleString()}}원`;
+                }};
+                updKrHold("kq", s.kq);
+                updKrHold("yg", s.yg);
+                updKrHold("or1", s.or1);
+                updKrHold("or2", s.or2);
+                updKrHold("ab", s.ab);
+
+                pfChart.data.datasets[0].data = [
+                    Math.round(d.kpi.ramEvalKrw / 10000),
+                    Math.round(d.kpi.bioEvalKrw / 10000),
+                    Math.round(s.kq.evalAmt / 10000),
+                    Math.round(d.kpi.remCashKrw / 10000),
+                    Math.round(s.yg.evalAmt / 10000)
+                ];
+                pfChart.update();
+
+                if (badge) badge.textContent = "🟢 실시간 LIVE 동기화 완료";
+            }} catch (e) {{
+                if (badge) badge.textContent = "⚪ 스냅샷 표시 중";
+            }} finally {{
+                if (btn) btn.textContent = "🔄 실시간 시세 새로고침";
+            }}
+        }}
+
+        // 웹 관제탑을 열자마자 자동으로 실시간 시세 패치 실행 (60초마다 자동 재갱신)
+        window.addEventListener("DOMContentLoaded", () => {{
+            fetchLiveDashboard();
+            setInterval(fetchLiveDashboard, 60000);
         }});
     </script>
 </body>
@@ -1006,9 +1174,10 @@ def main():
     except Exception as e:
         print("PNG generation error:", e)
 
+    # [핵심 수정] GitHub 지연에 대비해 오전(07~11시), 밤(21~00시) 창을 넓히고, 수동 실행 시에는 last_sent.txt를 잠그지 않음
     today_str = now_kst.strftime("%Y-%m-%d")
     curr_hour = now_kst.hour
-    slot = "AM" if (8 <= curr_hour <= 10) else ("PM" if (22 <= curr_hour <= 23) else "")
+    slot = "AM" if (7 <= curr_hour <= 11) else ("PM" if (21 <= curr_hour <= 23 or curr_hour == 0) else "")
     slot_key = f"{today_str}_{slot}" if slot else ""
 
     last_sent = ""
@@ -1016,15 +1185,15 @@ def main():
         with open("last_sent.txt", "r", encoding="utf-8") as lf:
             last_sent = lf.read().strip()
 
-    is_scheduled_slot = (slot != "" and last_sent != slot_key)
     is_manual_run = (EVENT_NAME == "workflow_dispatch")
-    is_quiet_hour = QUIET_NIGHT_MODE and (0 <= curr_hour <= 6)
+    is_scheduled_slot = (not is_manual_run) and (slot != "") and (last_sent != slot_key)
+    is_quiet_hour = QUIET_NIGHT_MODE and (1 <= curr_hour <= 6)
     any_buy_alert = any([ram["alert"], kq["alert"], yg["alert"], or1["alert"], ab["alert"], tranche_alert]) and not is_quiet_hour
 
     if TOKEN and CHAT_ID and (is_scheduled_slot or is_manual_run or any_buy_alert):
-        header_prefix = "🚨 <b>[긴급 타점/스탑 시그널 포착!]</b>\n" if (any_buy_alert and not is_scheduled_slot) else ""
+        header_prefix = "🚨 <b>[긴급 타점/스탑 시그널 포착!]</b>\n" if (any_buy_alert and not is_scheduled_slot and not is_manual_run) else ""
         caption_msg = (
-            f"{header_prefix}🛡️ <b>[V6.2 다크모드 인포그래픽 브리핑]</b>\n"
+            f"{header_prefix}🛡️ <b>[V7.0 LIVE 인포그래픽 브리핑]</b>\n"
             f"⏰ {now_str} | 총자산: <b>{total_eval_krw//10000:,}만 원</b> (현금 {rem_cash_eval//10000:,}만)\n"
             f"⚡ 반도체 풍향계: {semi_tg_str}\n\n"
             f"{tranche_tg}\n\n"
@@ -1034,7 +1203,7 @@ def main():
 
         inline_kb = {
             "inline_keyboard": [
-                [{"text": "📊 V6.2 인터랙티브 웹 관제탑 열기", "url": DASHBOARD_URL}]
+                [{"text": "📊 V7.0 실시간 LIVE 웹 관제탑 열기", "url": DASHBOARD_URL}]
             ]
         }
 
@@ -1070,7 +1239,8 @@ def main():
                 timeout=10
             )
 
-        if is_scheduled_slot:
+        # 오직 스케줄(cron)로 정상 실행된 경우에만 발송 완료 기록을 남겨 수동 테스트와의 충돌 방지
+        if is_scheduled_slot and not is_manual_run:
             with open("last_sent.txt", "w", encoding="utf-8") as lf:
                 lf.write(slot_key)
 
