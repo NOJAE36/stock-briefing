@@ -2,23 +2,21 @@ name: Daily Stock Briefing
 
 on:
   schedule:
-    # 평일 매시간 5분마다 실행 (한국시간 월요일 09:05 - 토요일 08:05)
-    - cron: '5 * * * 1-5'
-    # 토요일 오전 미국 애프터장 마감까지 커버 (한국시간 토요일 09:05, 10:05)
-    - cron: '5 0,1 * * 6'
+    # 평일(월~금) 매시 12분 실행 (정각 병목 회피로 지연 최소화)
+    - cron: '12 * * * 1-5'
+    # 토요일 새벽~오전(미국 금요일 본장·애프터장 마감 반영) 및 토·일요일 정기 브리핑 시간(KST 08시, 22시) 실행
+    - cron: '12 0,1,13,23 * * 6,0'
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  build:
+  build_and_notify:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -27,23 +25,19 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          pip install requests feedparser yfinance pandas
+          pip install --upgrade pip
+          pip install requests feedparser yfinance pandas numpy pillow
 
-      - name: Run Briefing Bot
-        timeout-minutes: 3
+      - name: Run Master Control Tower V7.0
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: python bot.py
 
-      - name: Force Commit and Push index.html
+      - name: Commit and Push Live Dashboard & Image
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          touch last_sent.txt
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
           git add index.html last_sent.txt
-          git commit -m "Auto-update V5.4 hourly dashboard" || echo "No changes to commit"
-          git push origin HEAD:main --force
+          if [ -f dashboard_card.png ]; then git add dashboard_card.png; fi
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update V7.0 dashboard" && git pull --rebase origin main && git push)
