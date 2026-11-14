@@ -67,6 +67,14 @@ NEW_TRANCHES = [
     }
 ]
 
+# [4] 글로벌 반도체·HBM 풍향계 4대 종목
+SEMI_PEERS = [
+    {"symbol": "NVDA", "name": "엔비디아", "is_kr": False, "fallback": 142.0},
+    {"symbol": "MU", "name": "마이크론", "is_kr": False, "fallback": 102.0},
+    {"symbol": "005930.KS", "name": "삼성전자", "is_kr": True, "fallback": 53000},
+    {"symbol": "000660.KS", "name": "SK하이닉스", "is_kr": True, "fallback": 178000}
+]
+
 KEY_EVENTS = [
     {"date": "2026-11-18", "cat": "AI·DRAM", "title": "엔비디아(NVDA) FY27 3Q 실적발표 (HBM 수요 풍향계)"},
     {"date": "2026-12-10", "cat": "매크로", "title": "미국 12월 FOMC 금리결정 및 점도표 발표"},
@@ -145,6 +153,39 @@ def make_sparkline_svg(prices, color="#38bdf8"):
         f'<circle cx="{last_x}" cy="{last_y}" r="3" fill="{color}"/>'
         f'</svg>'
     )
+
+def fetch_semi_peers():
+    results = []
+    for p in SEMI_PEERS:
+        sym = p["symbol"]
+        curr = float(p["fallback"])
+        pct = 0.0
+        try:
+            t = yf.Ticker(sym)
+            hist = t.history(period="5d", timeout=8)
+            if not hist.empty:
+                df = hist.dropna(subset=['Close'])
+                if len(df) >= 1:
+                    reg_curr = float(df['Close'].iloc[-1])
+                    prev = float(df['Close'].iloc[-2]) if len(df) >= 2 else reg_curr
+                    curr = reg_curr
+                    if not p["is_kr"]:
+                        try:
+                            intra = t.history(period="2d", interval="5m", prepost=True, timeout=6)
+                            if not intra.empty:
+                                ic = intra.dropna(subset=['Close'])
+                                if not ic.empty:
+                                    curr = float(ic['Close'].iloc[-1])
+                                    if ic.index[-1].date() > df.index[-1].date():
+                                        prev = reg_curr
+                        except Exception:
+                            pass
+                    pct = ((curr - prev) / prev) * 100.0 if prev > 0 else 0.0
+        except Exception:
+            pass
+        p_str = f"₩{curr:,.0f}" if p["is_kr"] else f"${curr:,.2f}"
+        results.append({"name": p["name"], "symbol": sym.split(".")[0], "price_str": p_str, "pct": pct})
+    return results
 
 def build_dday_section(now_kst):
     today = now_kst.date()
@@ -440,26 +481,26 @@ def evaluate_new_tranches(price_map, krw_rate):
     live_pnl_krw = live_eval_krw - live_cost_krw
     return "".join(cards_html), "\n".join(tg_rows), exit_alert, live_cost_krw, live_eval_krw, live_pnl_krw, primary_live_data
 
-def generate_dashboard_png(out_path, now_str, krw_p, total_eval_krw, total_pnl_krw, stock_ret_pct, total_asset_ret_pct, stock_eval_krw, rem_cash_eval, live_tr, stocks_info, img_events):
+def generate_dashboard_png(out_path, now_str, krw_p, total_eval_krw, total_pnl_krw, stock_ret_pct, total_asset_ret_pct, stock_eval_krw, rem_cash_eval, semi_peers, live_tr, stocks_info, img_events):
     reg_font_path, bold_font_path = ensure_korean_fonts()
     f_title = load_font(bold_font_path, 26)
     f_sub = load_font(reg_font_path, 16)
-    f_kpi_lbl = load_font(reg_font_path, 16)
-    f_kpi_val = load_font(bold_font_path, 28)
-    f_kpi_sub = load_font(reg_font_path, 14)
-    f_sec = load_font(bold_font_path, 20)
-    f_card_b = load_font(bold_font_path, 19)
+    f_kpi_lbl = load_font(reg_font_path, 15)
+    f_kpi_val = load_font(bold_font_path, 27)
+    f_kpi_sub = load_font(reg_font_path, 13)
+    f_sec = load_font(bold_font_path, 19)
+    f_card_b = load_font(bold_font_path, 18)
     f_card_r = load_font(reg_font_path, 15)
     f_pill = load_font(bold_font_path, 13)
 
-    W, H = 900, 1220
+    W, H = 900, 1310
     img = Image.new("RGB", (W, H), "#070b14")
     draw = ImageDraw.Draw(img)
 
     # 1. 상단 헤더
-    draw.text((28, 22), "마스터 비주얼 관제탑 V6.1", font=f_title, fill="#38bdf8")
+    draw.text((28, 20), "마스터 비주얼 관제탑 V6.2", font=f_title, fill="#38bdf8")
     sync_txt = f"동기화: {now_str} | 환율 ₩{krw_p:,.1f}"
-    draw.text((W - 28, 28), sync_txt, font=f_sub, fill="#94a3b8", anchor="ra")
+    draw.text((W - 28, 26), sync_txt, font=f_sub, fill="#94a3b8", anchor="ra")
 
     # 2. 상단 2x2 KPI 카드
     pnl_col = "#4ade80" if total_pnl_krw >= 0 else "#f87171"
@@ -472,62 +513,70 @@ def generate_dashboard_png(out_path, now_str, krw_p, total_eval_krw, total_pnl_k
     for idx, (lbl, val, sub, col) in enumerate(kpis):
         r, c = idx // 2, idx % 2
         x0 = 28 + c * 428
-        y0 = 68 + r * 104
-        x1, y1 = x0 + 414, y0 + 92
+        y0 = 64 + r * 100
+        x1, y1 = x0 + 414, y0 + 88
         draw.rounded_rectangle([x0, y0, x1, y1], radius=12, fill="#111827", outline="#1e293b", width=2)
-        draw.text((x0 + 207, y0 + 14), lbl, font=f_kpi_lbl, fill="#94a3b8", anchor="ma")
-        draw.text((x0 + 207, y0 + 38), val, font=f_kpi_val, fill=col, anchor="ma")
-        draw.text((x0 + 207, y0 + 70), sub, font=f_kpi_sub, fill="#64748b", anchor="ma")
+        draw.text((x0 + 207, y0 + 12), lbl, font=f_kpi_lbl, fill="#94a3b8", anchor="ma")
+        draw.text((x0 + 207, y0 + 35), val, font=f_kpi_val, fill=col, anchor="ma")
+        draw.text((x0 + 207, y0 + 66), sub, font=f_kpi_sub, fill="#64748b", anchor="ma")
 
-    # 3. 신규 스윙 트랑셰 위치 게이지 박스 (RAM 606주)
-    ty0 = 284
-    ty1 = ty0 + 158
+    # 3. 글로벌 반도체·HBM 4대 풍향계 바 (엔비디아 · 마이크론 · 삼성전자 · SK하이닉스)
+    py0 = 272
+    draw.text((28, py0), "글로벌 반도체 · HBM 풍향계 (RAM 선행지표)", font=f_sec, fill="#fbbf24")
+    for idx, sp in enumerate(semi_peers):
+        sx0 = 28 + idx * 214
+        sy0_box = py0 + 28
+        sx1, sy1_box = sx0 + 202, sy0_box + 64
+        p_col = "#4ade80" if sp["pct"] >= 0 else "#f87171"
+        draw.rounded_rectangle([sx0, sy0_box, sx1, sy1_box], radius=10, fill="#0f172a", outline="#334155", width=2)
+        draw.text((sx0 + 14, sy0_box + 10), f"{sp['name']}", font=f_card_r, fill="#cbd5e1")
+        draw.text((sx1 - 12, sy0_box + 10), f"{sp['pct']:+.2f}%", font=f_card_r, fill=p_col, anchor="ra")
+        draw.text((sx0 + 14, sy0_box + 34), sp["price_str"], font=f_card_b, fill="#f8fafc")
+
+    # 4. 신규 스윙 트랑셰 위치 게이지 박스 (RAM 606주)
+    ty0 = 376
+    ty1 = ty0 + 154
     draw.rounded_rectangle([28, ty0, W - 28, ty1], radius=14, fill="#142038", outline="#2dd4bf", width=2)
     if live_tr:
         tr_col = "#4ade80" if live_tr["ret_entry"] >= 0 else "#f87171"
-        draw.text((48, ty0 + 16), f"[실전 LIVE] {live_tr['name']} ({live_tr['qty']:,}주 · 진입 ${live_tr['entry_p']:.2f})", font=f_sec, fill="#2dd4bf")
-        draw.text((W - 48, ty0 + 16), f"현재 ${live_tr['curr_p']:.2f} ({live_tr['ret_entry']:+.2f}%)", font=f_sec, fill=tr_col, anchor="ra")
+        draw.text((48, ty0 + 14), f"[실전 LIVE] {live_tr['name']} ({live_tr['qty']:,}주 · 진입 ${live_tr['entry_p']:.2f})", font=f_sec, fill="#2dd4bf")
+        draw.text((W - 48, ty0 + 14), f"현재 ${live_tr['curr_p']:.2f} ({live_tr['ret_entry']:+.2f}%)", font=f_sec, fill=tr_col, anchor="ra")
 
-        # 슬라이더 트랙
         bx0, bx1 = 56, W - 56
-        by = ty0 + 78
+        by = ty0 + 76
         draw.rounded_rectangle([bx0, by - 6, bx1, by + 6], radius=6, fill="#0f172a", outline="#334155", width=1)
         fill_x = int(bx0 + (bx1 - bx0) * (live_tr["pos_pct"] / 100.0))
         if fill_x > bx0:
             draw.rounded_rectangle([bx0, by - 6, fill_x, by + 6], radius=6, fill="#38bdf8")
 
-        # 1차 반등 예약선($6.68) 점선 마커
         half_ratio = max(0.0, min(1.0, (live_tr["half_p"] - live_tr["stop_p"]) / (live_tr["target_p"] - live_tr["stop_p"])))
         hx = int(bx0 + (bx1 - bx0) * half_ratio)
         draw.line([(hx, by - 12), (hx, by + 12)], fill="#fbbf24", width=3)
         draw.text((hx, by - 28), f"절반예약 ${live_tr['half_p']:.2f}", font=f_kpi_sub, fill="#fbbf24", anchor="ma")
 
-        # 현재가 원형 포인트
         draw.ellipse([fill_x - 10, by - 10, fill_x + 10, by + 10], fill="#ffffff", outline="#38bdf8", width=4)
 
         draw.text((bx0, by - 28), f"스탑 ${live_tr['stop_p']:.2f} (-{live_tr['dist_stop']:.1f}% 여유)", font=f_card_r, fill="#f87171")
         draw.text((bx1, by - 28), f"목표 ${live_tr['target_p']:.2f} (+{live_tr['dist_target']:.1f}% 남음)", font=f_card_r, fill="#4ade80", anchor="ra")
 
         foot_txt = f"단독손익: {live_tr['pnl_str']}  |  {live_tr['blended_note']}  |  {live_tr['status_str']}"
-        draw.text((48, ty0 + 118), foot_txt, font=f_card_r, fill="#e2e8f0")
+        draw.text((48, ty0 + 114), foot_txt, font=f_card_r, fill="#e2e8f0")
 
-    # 4. 5대 종목 4중 검증 스위치 & 20일 추세 스파크라인
-    sy0 = 458
+    # 5. 5대 종목 4중 검증 스위치 & 20일 추세 스파크라인
+    sy0 = 546
     draw.text((28, sy0), "5대 보유 종목 4중 검증 스위치 & 20일 주가 추세", font=f_sec, fill="#38bdf8")
 
-    row_y = sy0 + 34
+    row_y = sy0 + 32
     for st in stocks_info:
         ry0, ry1 = row_y, row_y + 108
         draw.rounded_rectangle([28, ry0, W - 28, ry1], radius=12, fill="#111827", outline="#1f2937", width=2)
         draw.rounded_rectangle([28, ry0, 36, ry1], radius=4, fill=st["color"])
 
-        # 좌측 종목명 & 현재가/내 수익률
         draw.text((50, ry0 + 14), f"{st['name']}  [{st['price_str']}]", font=f_card_b, fill="#f8fafc")
         r_col = "#4ade80" if st["my_ret"] >= 0 else "#f87171"
         draw.text((50, ry0 + 44), f"내 수익률: {st['my_ret']:+.1f}%", font=f_card_r, fill=r_col)
         draw.text((210, ry0 + 44), f"RSI {st['m']['rsi']:.1f}(기준{st['m']['rsi_cut']:.0f}) | 이격 {st['m']['disp']:+.1f}%({st['m']['disp_cut']:.0f}%)", font=f_card_r, fill="#94a3b8")
 
-        # 하단 4중 검증 스위치 배지 4개
         pills = [
             ("과매도", st["m"]["c1"]),
             ("지지선", st["m"]["c2"]),
@@ -545,7 +594,6 @@ def generate_dashboard_png(out_path, now_str, krw_p, total_eval_krw, total_pnl_k
             draw.text((px + 52, py + 4), prefix + p_lbl, font=f_pill, fill=fg, anchor="ma")
             px += 112
 
-        # 우측 20일 미니 스파크라인 차트 및 판정 배지
         spark = st["m"].get("spark", [])
         sx0, sx1 = W - 260, W - 140
         sy_top, sy_bot = ry0 + 18, ry0 + 62
@@ -568,9 +616,9 @@ def generate_dashboard_png(out_path, now_str, krw_p, total_eval_krw, total_pnl_k
 
         row_y += 118
 
-    # 5. 하단 핵심 일정 D-Day 바
+    # 6. 하단 핵심 일정 D-Day 바
     dy0 = row_y + 6
-    draw.rounded_rectangle([28, dy0, W - 28, H - 20], radius=12, fill="#111827", outline="#1f2937", width=2)
+    draw.rounded_rectangle([28, dy0, W - 28, H - 18], radius=12, fill="#111827", outline="#1f2937", width=2)
     draw.text((48, dy0 + 12), "임박 핵심 일정 D-Day:", font=f_card_b, fill="#fbbf24")
     ex = 245
     for ev in img_events[:2]:
@@ -671,6 +719,7 @@ def main():
     now_str = now_kst.strftime("%Y-%m-%d %H:%M KST")
 
     dday_html, dday_tg, img_events = build_dday_section(now_kst)
+    semi_peers = fetch_semi_peers()
 
     ram_param = CUSTOM_PARAMS["RAM"]
     ram = get_quad_verified_metrics("RAM", rsi_cut=ram_param["rsi_cut"], disp_cut=ram_param["disp_cut"], is_core_cash_target=True)
@@ -735,6 +784,12 @@ def main():
     or2_color = "pos" if or2['ret_pct'] >= 0 else "neg"
     ab_color = "pos" if ab['ret_pct'] >= 0 else "neg"
 
+    semi_bar_html = "".join([
+        f'<div class="semi-tile"><div class="semi-top"><span>{sp["name"]}</span><span class="{"pos" if sp["pct"]>=0 else "neg"}">{sp["pct"]:+.2f}%</span></div><div class="semi-val">{sp["price_str"]}</div></div>'
+        for sp in semi_peers
+    ])
+    semi_tg_str = " | ".join([f"<b>{sp['name']}</b> {sp['pct']:+.1f}%" for sp in semi_peers])
+
     quick_bar_html = (
         render_quick_tile("RAM", ram) +
         render_quick_tile("코스닥레버", kq) +
@@ -782,18 +837,23 @@ def main():
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <meta http-equiv="refresh" content="1800">
-    <title>마스터 관제탑 V6.1</title>
+    <title>마스터 관제탑 V6.2</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {{ font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #070b14; color: #f8fafc; margin: 0; padding: 12px; max-width: 600px; margin: auto; }}
         .top-hd {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }}
         .top-title {{ font-size: 1.1rem; font-weight: 800; color: #38bdf8; }}
         .top-sync {{ font-size: 0.72rem; color: #94a3b8; }}
-        .kpi-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }}
+        .kpi-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }}
         .kpi-box {{ background: linear-gradient(145deg, #131c31, #0f172a); border: 1px solid #1e293b; border-radius: 10px; padding: 10px; text-align: center; }}
         .kpi-lbl {{ font-size: 0.71rem; color: #94a3b8; margin-bottom: 3px; }}
         .kpi-val {{ font-size: 1.02rem; font-weight: 800; color: #f8fafc; }}
         .kpi-sub {{ font-size: 0.68rem; color: #64748b; margin-top: 2px; }}
+        .semi-hd {{ font-size: 0.75rem; font-weight: 700; color: #fbbf24; margin-bottom: 5px; }}
+        .semi-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }}
+        .semi-tile {{ background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 7px 6px; }}
+        .semi-top {{ display: flex; justify-content: space-between; font-size: 0.68rem; color: #cbd5e1; margin-bottom: 3px; }}
+        .semi-val {{ font-size: 0.80rem; font-weight: 800; color: #f8fafc; }}
         .q-grid {{ display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 14px; }}
         .q-tile {{ border-radius: 8px; padding: 8px 4px; text-align: center; border: 1px solid #1e293b; }}
         .q-buy {{ background: rgba(74, 222, 128, 0.15); border-color: #4ade80; }}
@@ -845,7 +905,7 @@ def main():
 </head>
 <body>
     <div class="top-hd">
-        <div class="top-title">🛡️ 마스터 비주얼 관제탑 V6.1</div>
+        <div class="top-title">🛡️ 마스터 비주얼 관제탑 V6.2</div>
         <div class="top-sync">동기화: {now_str} (₩{krw_p:,.1f})</div>
     </div>
 
@@ -870,6 +930,11 @@ def main():
             <div class="kpi-val">{stock_eval_krw//10000:,}만 / <span style="color:#4ade80;">{rem_cash_eval//10000:,}만</span></div>
             <div class="kpi-sub">RAM 1차(606주) 실전 감시 중</div>
         </div>
+    </div>
+
+    <div class="semi-hd">⚡ 글로벌 반도체 · HBM 4대 풍향계 (RAM 선행지표)</div>
+    <div class="semi-grid">
+        {semi_bar_html}
     </div>
 
     <div class="q-grid">
@@ -924,7 +989,6 @@ def main():
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html)
 
-    # 다크모드 인포그래픽 PNG 이미지 생성
     stocks_info = [
         {"name": "US RAM (6,460주)", "price_str": f"${ram_p:.2f} ({ram['pct']:+.2f}%) {ram['session']}", "my_ret": ram_total_ret, "m": ram, "color": "#38bdf8"},
         {"name": "KR 코스닥150레버", "price_str": f"₩{kq['curr']:,.0f} ({kq['pct']:+.2f}%)", "my_ret": kq["ret_pct"], "m": kq, "color": "#f87171"},
@@ -937,7 +1001,7 @@ def main():
         generate_dashboard_png(
             img_path, now_str, krw_p, total_eval_krw, total_pnl_krw,
             stock_ret_pct, total_asset_ret_pct, stock_eval_krw, rem_cash_eval,
-            primary_live_data, stocks_info, img_events
+            semi_peers, primary_live_data, stocks_info, img_events
         )
     except Exception as e:
         print("PNG generation error:", e)
@@ -960,8 +1024,9 @@ def main():
     if TOKEN and CHAT_ID and (is_scheduled_slot or is_manual_run or any_buy_alert):
         header_prefix = "🚨 <b>[긴급 타점/스탑 시그널 포착!]</b>\n" if (any_buy_alert and not is_scheduled_slot) else ""
         caption_msg = (
-            f"{header_prefix}🛡️ <b>[V6.1 다크모드 인포그래픽 브리핑]</b>\n"
-            f"⏰ {now_str} | 총자산: <b>{total_eval_krw//10000:,}만 원</b> (현금 {rem_cash_eval//10000:,}만)\n\n"
+            f"{header_prefix}🛡️ <b>[V6.2 다크모드 인포그래픽 브리핑]</b>\n"
+            f"⏰ {now_str} | 총자산: <b>{total_eval_krw//10000:,}만 원</b> (현금 {rem_cash_eval//10000:,}만)\n"
+            f"⚡ 반도체 풍향계: {semi_tg_str}\n\n"
             f"{tranche_tg}\n\n"
             f"📅 <b>[임박 일정 D-Day]</b>\n{dday_tg}\n\n"
             f"📰 <b>[최근 48시간 속보]</b>\n{news_tg}"
@@ -969,7 +1034,7 @@ def main():
 
         inline_kb = {
             "inline_keyboard": [
-                [{"text": "📊 V6.1 인터랙티브 웹 관제탑 열기", "url": DASHBOARD_URL}]
+                [{"text": "📊 V6.2 인터랙티브 웹 관제탑 열기", "url": DASHBOARD_URL}]
             ]
         }
 
