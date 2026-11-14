@@ -1,6 +1,13 @@
-import os, sys, datetime, urllib.parse
+import os, sys, json, datetime, urllib.parse, subprocess
 from email.utils import parsedate_to_datetime
 import requests, feedparser, yfinance as yf
+
+# [자동 환경 세팅] Pillow 이미지 라이브러리가 없으면 자동 설치
+try:
+    from PIL import Image, ImageDraw, ImageFont
+except ImportError:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "pillow"])
+    from PIL import Image, ImageDraw, ImageFont
 
 TOKEN = os.environ.get('TELEGRAM_TOKEN', '').strip()
 CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '').strip()
@@ -61,14 +68,40 @@ NEW_TRANCHES = [
 ]
 
 KEY_EVENTS = [
-    {"date": "2026-11-18", "cat": "🔥AI·DRAM", "title": "엔비디아(NVDA) FY27 3Q 실적발표 (HBM 수요 풍향계)"},
-    {"date": "2026-12-10", "cat": "🏦매크로", "title": "미국 12월 FOMC 금리결정 및 점도표 발표"},
-    {"date": "2026-12-12", "cat": "🧬바이오", "title": "미국 혈액암학회(ASH 2026) 개막 (오름·앱클론 모멘텀)"},
-    {"date": "2026-12-17", "cat": "💾DRAM", "title": "마이크론(MU) FY27 1Q 실적발표 (RAM 직접 모멘텀)"},
-    {"date": "2027-01-08", "cat": "💾DRAM", "title": "삼성전자 2026 4Q 잠정실적 발표 (메모리 마진 확인)"},
-    {"date": "2027-01-11", "cat": "🧬바이오", "title": "2027 JP모건 헬스케어 컨퍼런스 (글로벌 기술이전 시즌)"},
-    {"date": "2027-01-22", "cat": "💾DRAM", "title": "SK하이닉스 2026 4Q 실적발표 (HBM3E·HBM4 가이던스)"}
+    {"date": "2026-11-18", "cat": "AI·DRAM", "title": "엔비디아(NVDA) FY27 3Q 실적발표 (HBM 수요 풍향계)"},
+    {"date": "2026-12-10", "cat": "매크로", "title": "미국 12월 FOMC 금리결정 및 점도표 발표"},
+    {"date": "2026-12-12", "cat": "바이오", "title": "미국 혈액암학회(ASH 2026) 개막 (오름·앱클론 모멘텀)"},
+    {"date": "2026-12-17", "cat": "DRAM", "title": "마이크론(MU) FY27 1Q 실적발표 (RAM 직접 모멘텀)"},
+    {"date": "2027-01-08", "cat": "DRAM", "title": "삼성전자 2026 4Q 잠정실적 발표 (메모리 마진 확인)"},
+    {"date": "2027-01-11", "cat": "바이오", "title": "2027 JP모건 헬스케어 컨퍼런스 (글로벌 기술이전 시즌)"},
+    {"date": "2027-01-22", "cat": "DRAM", "title": "SK하이닉스 2026 4Q 실적발표 (HBM3E·HBM4 가이던스)"}
 ]
+
+def ensure_korean_fonts():
+    reg_path = "NanumGothic-Regular.ttf"
+    bold_path = "NanumGothic-Bold.ttf"
+    reg_url = "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/nanumgothic/NanumGothic-Regular.ttf"
+    bold_url = "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/nanumgothic/NanumGothic-Bold.ttf"
+    try:
+        if not os.path.exists(reg_path):
+            r = requests.get(reg_url, timeout=10)
+            if r.status_code == 200:
+                with open(reg_path, "wb") as f:
+                    f.write(r.content)
+        if not os.path.exists(bold_path):
+            r = requests.get(bold_url, timeout=10)
+            if r.status_code == 200:
+                with open(bold_path, "wb") as f:
+                    f.write(r.content)
+    except Exception:
+        pass
+    return reg_path, bold_path
+
+def load_font(path, size):
+    try:
+        return ImageFont.truetype(path, size)
+    except Exception:
+        return ImageFont.load_default()
 
 def make_visual_gauge(curr, low, high, length=10):
     if high <= low:
@@ -115,7 +148,7 @@ def make_sparkline_svg(prices, color="#38bdf8"):
 
 def build_dday_section(now_kst):
     today = now_kst.date()
-    html_badges, tg_lines = [], []
+    html_badges, tg_lines, img_events = [], [], []
     for ev in KEY_EVENTS:
         ev_date = datetime.date.fromisoformat(ev["date"])
         diff = (ev_date - today).days
@@ -126,12 +159,14 @@ def build_dday_section(now_kst):
         tg_prefix = "🔥" if diff <= 7 else ""
         html_badges.append(
             f'<div class="dday-row"><span class="dday-tag {urgent_cls}">{dday_str}</span>'
-            f'<span class="dday-cat">{ev["cat"]}</span>'
+            f'<span class="dday-cat">[{ev["cat"]}]</span>'
             f'<span class="dday-title">{ev["title"]} <span class="sub">({ev["date"][5:]})</span></span></div>'
         )
-        if len(tg_lines) < 4:
-            tg_lines.append(f"• <b>[{tg_prefix}{dday_str}]</b> {ev['cat']} {ev['title']} ({ev['date'][5:]})")
-    return "".join(html_badges), "\n".join(tg_lines)
+        if len(tg_lines) < 3:
+            tg_lines.append(f"• <b>[{tg_prefix}{dday_str}]</b> {ev['title']} ({ev['date'][5:]})")
+        if len(img_events) < 3:
+            img_events.append({"dday": dday_str, "urgent": diff <= 7, "cat": ev["cat"], "title": ev["title"], "date": ev["date"][5:]})
+    return "".join(html_badges), "\n".join(tg_lines), img_events
 
 def get_quad_verified_metrics(tickers, rsi_cut=35.0, disp_cut=-9.0, is_core_cash_target=True):
     if isinstance(tickers, str):
@@ -150,7 +185,7 @@ def get_quad_verified_metrics(tickers, rsi_cut=35.0, disp_cut=-9.0, is_core_cash
             reg_prev = float(df['Close'].iloc[-2]) if len(df) >= 2 else reg_curr
             curr = reg_curr
             prev = reg_prev
-            session_tag = "☀️본장"
+            session_tag = "본장"
 
             if not sym.endswith(('.KS', '.KQ')) and sym != 'KRW=X':
                 try:
@@ -162,11 +197,11 @@ def get_quad_verified_metrics(tickers, rsi_cut=35.0, disp_cut=-9.0, is_core_cash
                             last_ts = intra_clean.index[-1]
                             hm = last_ts.hour * 60 + last_ts.minute
                             if 240 <= hm < 570:
-                                session_tag = "🌅프리장"
+                                session_tag = "프리장"
                             elif 570 <= hm < 960:
-                                session_tag = "☀️본장"
+                                session_tag = "본장"
                             else:
-                                session_tag = "🌙애프터"
+                                session_tag = "애프터"
                             if last_ts.date() > df.index[-1].date():
                                 prev = reg_curr
                             df.iloc[-1, df.columns.get_loc('Close')] = curr
@@ -234,19 +269,19 @@ def get_quad_verified_metrics(tickers, rsi_cut=35.0, disp_cut=-9.0, is_core_cash
 
             is_buy_alert = False
             if c1_oversold and score == 4:
-                sig, short_st = f"🔥 4중검증 완벽타점 ({score}/4)", "🔥진바닥"
+                sig, short_st = f"🔥 4중검증 완벽타점 ({score}/4)", "진바닥(4/4)"
                 cash = "잔여 시드 517만 원 투입 검토" if is_core_cash_target else "진바닥 강세 전환 (분할 추매)"
                 is_buy_alert = True
             elif c1_oversold and score == 3 and (c3_momentum or c4_volume):
-                sig, short_st = f"✅ 1차 검증타점 ({score}/4)", "✅타점진입"
+                sig, short_st = f"✅ 1차 검증타점 ({score}/4)", "타점진입(3/4)"
                 cash = "신규 트랑셰 300만 원 투입" if is_core_cash_target else "단기 반등 타점 (소액 스윙)"
                 is_buy_alert = True
             elif c1_oversold and score <= 2:
-                sig, short_st, cash = f"⚠️ 하락칼날 주의 ({score}/4)", "⚠️칼날주의", "추가매수 대기 (반등 미확인)"
+                sig, short_st, cash = f"⚠️ 하락칼날 주의 ({score}/4)", f"칼날주의({score}/4)", "추가매수 대기 (반등 미확인)"
             elif rsi > 72:
-                sig, short_st, cash = f"🚨 단기 과열 ({score}/4)", "🚨과열주의", "신규 606주 익절 & 기존분 역물타기"
+                sig, short_st, cash = f"🚨 단기 과열 ({score}/4)", f"과열주의({score}/4)", "신규 606주 익절 & 기존분 역물타기"
             else:
-                sig, short_st, cash = f"⏸ 중립·관망 ({score}/4)", "⏸관망중", "1차 606주 감시 · 잔여현금 대기"
+                sig, short_st, cash = f"⏸ 중립·관망 ({score}/4)", f"관망중({score}/4)", "1차 606주 감시 · 잔여현금 대기"
 
             return {
                 "curr": curr, "reg_curr": reg_curr, "pct": pct, "ext_pct": ext_pct,
@@ -262,17 +297,18 @@ def get_quad_verified_metrics(tickers, rsi_cut=35.0, disp_cut=-9.0, is_core_cash
         "curr": 0.0, "reg_curr": 0.0, "pct": 0.0, "ext_pct": 0.0, "session": "대기",
         "rsi": 50.0, "ma20": 0.0, "disp": 0.0, "pct_b": 0.5, "macd_turn": False, "vol_ratio": 1.0,
         "c1": False, "c2": False, "c3": False, "c4": False, "rsi_cut": rsi_cut, "disp_cut": disp_cut, "spark": [],
-        "score": 0, "blocks": "⬜⬜⬜⬜", "chk": "대기", "sig": "데이터 대기", "short_st": "⏸대기", "cash": "0원", "alert": False
+        "score": 0, "blocks": "⬜⬜⬜⬜", "chk": "대기", "sig": "데이터 대기", "short_st": "대기(0/4)", "cash": "0원", "alert": False
     }
 
 def evaluate_new_tranches(price_map, krw_rate):
     if not NEW_TRANCHES:
-        return '<div class="sub">등록된 신규 스윙 트랑셰가 없습니다.</div>', "", False, 0, 0, 0
+        return '<div class="sub">등록된 신규 스윙 트랑셰가 없습니다.</div>', "", False, 0, 0, 0, None
 
     cards_html, tg_rows = [], []
     exit_alert = False
     live_cost_krw = 0
     live_eval_krw = 0
+    primary_live_data = None
 
     for tr in NEW_TRANCHES:
         try:
@@ -353,6 +389,14 @@ def evaluate_new_tranches(price_map, krw_rate):
                     status_str = f"🎯 목표 익절가 도달! ({p_fmt(target_p)} 익절 실행)"
                     exit_alert = True
 
+                primary_live_data = {
+                    "name": tr["name"], "qty": qty, "entry_p": entry_p, "curr_p": curr_p,
+                    "stop_p": stop_p, "target_p": target_p, "half_p": half_target_p,
+                    "ret_entry": ret_entry, "pnl_str": pnl_str, "pos_pct": pos_pct,
+                    "dist_stop": dist_to_stop, "dist_target": dist_to_target,
+                    "blended_note": blended_note, "status_str": status_str
+                }
+
             ret_cls = "pos" if ret_entry >= 0 else "neg"
             cards_html.append(f"""
                 <div class="tr-box">
@@ -384,17 +428,160 @@ def evaluate_new_tranches(price_map, krw_rate):
             if is_live:
                 gauge_bar = make_visual_gauge(curr_p, stop_p, target_p, 10)
                 tg_rows.append(
-                    f"🎯 <b>[실전 스윙 감시] {tr['name']} ({qty:,}주)</b>\n"
+                    f"🎯 <b>[실전 스윙] {tr['name']} ({qty:,}주)</b>\n"
                     f"<blockquote>진입 {p_fmt(entry_p)} ➔ 현재 <b>{p_fmt(curr_p)} ({ret_entry:+.2f}% / {pnl_krw//10000:+,}만)</b>\n"
                     f"🛡️{p_fmt(stop_p)} <code>{gauge_bar}</code> 🎯{p_fmt(target_p)}\n"
-                    f"• 목표({p_fmt(target_p)})까지 <b>+{dist_to_target:.1f}%</b> | 스탑({p_fmt(stop_p)})까지 <b>-{dist_to_stop:.1f}% 여유</b>\n"
+                    f"• 익절({p_fmt(target_p)})까지 <b>+{dist_to_target:.1f}%</b> | 스탑까지 <b>-{dist_to_stop:.1f}% 여유</b>\n"
                     f"• {blended_note}</blockquote>"
                 )
         except Exception:
             continue
 
     live_pnl_krw = live_eval_krw - live_cost_krw
-    return "".join(cards_html), "\n".join(tg_rows), exit_alert, live_cost_krw, live_eval_krw, live_pnl_krw
+    return "".join(cards_html), "\n".join(tg_rows), exit_alert, live_cost_krw, live_eval_krw, live_pnl_krw, primary_live_data
+
+def generate_dashboard_png(out_path, now_str, krw_p, total_eval_krw, total_pnl_krw, stock_ret_pct, total_asset_ret_pct, stock_eval_krw, rem_cash_eval, live_tr, stocks_info, img_events):
+    reg_font_path, bold_font_path = ensure_korean_fonts()
+    f_title = load_font(bold_font_path, 26)
+    f_sub = load_font(reg_font_path, 16)
+    f_kpi_lbl = load_font(reg_font_path, 16)
+    f_kpi_val = load_font(bold_font_path, 28)
+    f_kpi_sub = load_font(reg_font_path, 14)
+    f_sec = load_font(bold_font_path, 20)
+    f_card_b = load_font(bold_font_path, 19)
+    f_card_r = load_font(reg_font_path, 15)
+    f_pill = load_font(bold_font_path, 13)
+
+    W, H = 900, 1220
+    img = Image.new("RGB", (W, H), "#070b14")
+    draw = ImageDraw.Draw(img)
+
+    # 1. 상단 헤더
+    draw.text((28, 22), "마스터 비주얼 관제탑 V6.1", font=f_title, fill="#38bdf8")
+    sync_txt = f"동기화: {now_str} | 환율 ₩{krw_p:,.1f}"
+    draw.text((W - 28, 28), sync_txt, font=f_sub, fill="#94a3b8", anchor="ra")
+
+    # 2. 상단 2x2 KPI 카드
+    pnl_col = "#4ade80" if total_pnl_krw >= 0 else "#f87171"
+    kpis = [
+        ("총 평가자산 (1차목표 15,131만)", f"{total_eval_krw//10000:,}만 원", f"1차 전환선까지 {max(0, 15131 - total_eval_krw//10000):,}만 원", "#38bdf8"),
+        ("원화 환산 총 평가손익", f"{total_pnl_krw//10000:+,}만 원", f"{total_pnl_krw:+,}원", pnl_col),
+        ("보유 주식 합산 수익률", f"{stock_ret_pct:+.2f}%", f"현금포함 총자산 {total_asset_ret_pct:+.2f}%", pnl_col),
+        ("주식 평가액 / 잔여 현금", f"{stock_eval_krw//10000:,}만 / {rem_cash_eval//10000:,}만", "RAM 1차(606주) 실전 감시 중", "#4ade80")
+    ]
+    for idx, (lbl, val, sub, col) in enumerate(kpis):
+        r, c = idx // 2, idx % 2
+        x0 = 28 + c * 428
+        y0 = 68 + r * 104
+        x1, y1 = x0 + 414, y0 + 92
+        draw.rounded_rectangle([x0, y0, x1, y1], radius=12, fill="#111827", outline="#1e293b", width=2)
+        draw.text((x0 + 207, y0 + 14), lbl, font=f_kpi_lbl, fill="#94a3b8", anchor="ma")
+        draw.text((x0 + 207, y0 + 38), val, font=f_kpi_val, fill=col, anchor="ma")
+        draw.text((x0 + 207, y0 + 70), sub, font=f_kpi_sub, fill="#64748b", anchor="ma")
+
+    # 3. 신규 스윙 트랑셰 위치 게이지 박스 (RAM 606주)
+    ty0 = 284
+    ty1 = ty0 + 158
+    draw.rounded_rectangle([28, ty0, W - 28, ty1], radius=14, fill="#142038", outline="#2dd4bf", width=2)
+    if live_tr:
+        tr_col = "#4ade80" if live_tr["ret_entry"] >= 0 else "#f87171"
+        draw.text((48, ty0 + 16), f"[실전 LIVE] {live_tr['name']} ({live_tr['qty']:,}주 · 진입 ${live_tr['entry_p']:.2f})", font=f_sec, fill="#2dd4bf")
+        draw.text((W - 48, ty0 + 16), f"현재 ${live_tr['curr_p']:.2f} ({live_tr['ret_entry']:+.2f}%)", font=f_sec, fill=tr_col, anchor="ra")
+
+        # 슬라이더 트랙
+        bx0, bx1 = 56, W - 56
+        by = ty0 + 78
+        draw.rounded_rectangle([bx0, by - 6, bx1, by + 6], radius=6, fill="#0f172a", outline="#334155", width=1)
+        fill_x = int(bx0 + (bx1 - bx0) * (live_tr["pos_pct"] / 100.0))
+        if fill_x > bx0:
+            draw.rounded_rectangle([bx0, by - 6, fill_x, by + 6], radius=6, fill="#38bdf8")
+
+        # 1차 반등 예약선($6.68) 점선 마커
+        half_ratio = max(0.0, min(1.0, (live_tr["half_p"] - live_tr["stop_p"]) / (live_tr["target_p"] - live_tr["stop_p"])))
+        hx = int(bx0 + (bx1 - bx0) * half_ratio)
+        draw.line([(hx, by - 12), (hx, by + 12)], fill="#fbbf24", width=3)
+        draw.text((hx, by - 28), f"절반예약 ${live_tr['half_p']:.2f}", font=f_kpi_sub, fill="#fbbf24", anchor="ma")
+
+        # 현재가 원형 포인트
+        draw.ellipse([fill_x - 10, by - 10, fill_x + 10, by + 10], fill="#ffffff", outline="#38bdf8", width=4)
+
+        draw.text((bx0, by - 28), f"스탑 ${live_tr['stop_p']:.2f} (-{live_tr['dist_stop']:.1f}% 여유)", font=f_card_r, fill="#f87171")
+        draw.text((bx1, by - 28), f"목표 ${live_tr['target_p']:.2f} (+{live_tr['dist_target']:.1f}% 남음)", font=f_card_r, fill="#4ade80", anchor="ra")
+
+        foot_txt = f"단독손익: {live_tr['pnl_str']}  |  {live_tr['blended_note']}  |  {live_tr['status_str']}"
+        draw.text((48, ty0 + 118), foot_txt, font=f_card_r, fill="#e2e8f0")
+
+    # 4. 5대 종목 4중 검증 스위치 & 20일 추세 스파크라인
+    sy0 = 458
+    draw.text((28, sy0), "5대 보유 종목 4중 검증 스위치 & 20일 주가 추세", font=f_sec, fill="#38bdf8")
+
+    row_y = sy0 + 34
+    for st in stocks_info:
+        ry0, ry1 = row_y, row_y + 108
+        draw.rounded_rectangle([28, ry0, W - 28, ry1], radius=12, fill="#111827", outline="#1f2937", width=2)
+        draw.rounded_rectangle([28, ry0, 36, ry1], radius=4, fill=st["color"])
+
+        # 좌측 종목명 & 현재가/내 수익률
+        draw.text((50, ry0 + 14), f"{st['name']}  [{st['price_str']}]", font=f_card_b, fill="#f8fafc")
+        r_col = "#4ade80" if st["my_ret"] >= 0 else "#f87171"
+        draw.text((50, ry0 + 44), f"내 수익률: {st['my_ret']:+.1f}%", font=f_card_r, fill=r_col)
+        draw.text((210, ry0 + 44), f"RSI {st['m']['rsi']:.1f}(기준{st['m']['rsi_cut']:.0f}) | 이격 {st['m']['disp']:+.1f}%({st['m']['disp_cut']:.0f}%)", font=f_card_r, fill="#94a3b8")
+
+        # 하단 4중 검증 스위치 배지 4개
+        pills = [
+            ("과매도", st["m"]["c1"]),
+            ("지지선", st["m"]["c2"]),
+            ("MACD반등", st["m"]["c3"]),
+            ("수급유입", st["m"]["c4"])
+        ]
+        px = 50
+        py = ry0 + 72
+        for p_lbl, is_on in pills:
+            bg = "#14532d" if is_on else "#0f172a"
+            bd = "#4ade80" if is_on else "#334155"
+            fg = "#4ade80" if is_on else "#64748b"
+            prefix = "ON " if is_on else "OFF "
+            draw.rounded_rectangle([px, py, px + 104, py + 24], radius=6, fill=bg, outline=bd, width=1)
+            draw.text((px + 52, py + 4), prefix + p_lbl, font=f_pill, fill=fg, anchor="ma")
+            px += 112
+
+        # 우측 20일 미니 스파크라인 차트 및 판정 배지
+        spark = st["m"].get("spark", [])
+        sx0, sx1 = W - 260, W - 140
+        sy_top, sy_bot = ry0 + 18, ry0 + 62
+        draw.rounded_rectangle([sx0 - 8, sy_top - 6, sx1 + 8, sy_bot + 6], radius=6, fill="#0b0f19", outline="#1e293b", width=1)
+        if len(spark) >= 2:
+            mn, mx = min(spark), max(spark)
+            rng = (mx - mn) if mx > mn else 1.0
+            pts = []
+            for i, val in enumerate(spark):
+                x = sx0 + (i / (len(spark) - 1)) * (sx1 - sx0)
+                y = sy_bot - ((val - mn) / rng) * (sy_bot - sy_top)
+                pts.append((x, y))
+            draw.line(pts, fill=st["color"], width=3)
+            lx, ly = pts[-1]
+            draw.ellipse([lx - 4, ly - 4, lx + 4, ly + 4], fill=st["color"])
+
+        st_col = "#4ade80" if st["m"]["alert"] else ("#f87171" if st["m"]["rsi"] > 72 else "#38bdf8")
+        draw.text((W - 48, ry0 + 22), st["m"]["short_st"], font=f_card_b, fill=st_col, anchor="ra")
+        draw.text((W - 48, ry0 + 72), st["m"]["cash"], font=f_kpi_sub, fill="#fbbf24", anchor="ra")
+
+        row_y += 118
+
+    # 5. 하단 핵심 일정 D-Day 바
+    dy0 = row_y + 6
+    draw.rounded_rectangle([28, dy0, W - 28, H - 20], radius=12, fill="#111827", outline="#1f2937", width=2)
+    draw.text((48, dy0 + 12), "임박 핵심 일정 D-Day:", font=f_card_b, fill="#fbbf24")
+    ex = 245
+    for ev in img_events[:2]:
+        tag_bg = "#ef4444" if ev["urgent"] else "#1e293b"
+        draw.rounded_rectangle([ex, dy0 + 10, ex + 64, dy0 + 36], radius=6, fill=tag_bg)
+        draw.text((ex + 32, dy0 + 15), ev["dday"], font=f_pill, fill="#ffffff", anchor="ma")
+        short_t = ev["title"].split(" (")[0]
+        draw.text((ex + 72, dy0 + 14), f"{short_t} ({ev['date']})", font=f_card_r, fill="#e2e8f0")
+        ex += 315
+
+    img.save(out_path, "PNG")
 
 def calc_kr_holding(key, param_key, is_core=False, cached_m=None):
     item = PORTFOLIO[key]
@@ -437,7 +624,7 @@ def render_quick_tile(short_name, m):
         <div class="q-tile {tile_cls}">
             <div class="q-name">{short_name}</div>
             <div class="q-score">{m['blocks']}</div>
-            <div class="q-st">{m['short_st']} ({m['score']}/4)</div>
+            <div class="q-st">{m['short_st']}</div>
         </div>"""
 
 def render_sig_card(title, price_badge, my_ret_str, m, border_color):
@@ -483,7 +670,7 @@ def main():
     now_kst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
     now_str = now_kst.strftime("%Y-%m-%d %H:%M KST")
 
-    dday_html, dday_tg = build_dday_section(now_kst)
+    dday_html, dday_tg, img_events = build_dday_section(now_kst)
 
     ram_param = CUSTOM_PARAMS["RAM"]
     ram = get_quad_verified_metrics("RAM", rsi_cut=ram_param["rsi_cut"], disp_cut=ram_param["disp_cut"], is_core_cash_target=True)
@@ -517,7 +704,7 @@ def main():
         "475830.KQ": or1["curr"],
         "174900.KQ": ab["curr"]
     }
-    tranche_html, tranche_tg, tranche_alert, live_tr_cost, live_tr_eval, live_tr_pnl = evaluate_new_tranches(price_map, krw_p)
+    tranche_html, tranche_tg, tranche_alert, live_tr_cost, live_tr_eval, live_tr_pnl, primary_live_data = evaluate_new_tranches(price_map, krw_p)
 
     base_cash = PORTFOLIO["CASH"]["eval_krw"]
     rem_cash_eval = max(0, base_cash - live_tr_cost)
@@ -533,13 +720,12 @@ def main():
     bio_eval_krw = or1["eval_krw"] + or2["eval_krw"] + ab["eval_krw"]
     ram_combined_eval_krw = ram_eval_krw + live_tr_eval
 
-    news = (get_latest_strict_news("엔비디아 실적 OR 마이크론 OR 삼성전자 HBM", "[반도체/DRAM]", 2) +
-            get_latest_strict_news("코스닥 수급 OR 미국 금리 환율", "[매크로/코스닥]", 2) +
-            get_latest_strict_news("와이지-원 OR 절삭공구", "[와이지원]", 1) +
-            get_latest_strict_news("오름테라퓨틱 OR 앱클론", "[바이오]", 2))
+    news = (get_latest_strict_news("엔비디아 실적 OR 마이크론 OR 삼성전자 HBM", "[반도체]", 2) +
+            get_latest_strict_news("코스닥 수급 OR 미국 금리 환율", "[매크로]", 1) +
+            get_latest_strict_news("오름테라퓨틱 OR 앱클론", "[바이오]", 1))
 
     news_html = "".join([f'<div class="n-item"><div class="n-hd"><span class="tag">{x["tag"]}</span><span class="meta">{x["time"]} | {x["source"]}</span></div><a href="{x["link"]}" target="_blank">{x["title"]}</a></div>' for x in news]) or '<div class="n-item">최근 48시간 내 속보 없음</div>'
-    news_tg = "\n".join([f"• {x['tag']} <a href='{x['link']}'>{x['title']}</a> ({x['time']})" for x in news]) or "• 최근 48시간 내 속보 없음"
+    news_tg = "\n".join([f"• {x['tag']} <a href='{x['link']}'>{x['title']}</a>" for x in news]) or "• 최근 48시간 내 속보 없음"
 
     pnl_color = "pos" if total_pnl_krw >= 0 else "neg"
     ram_color = "pos" if ram_total_ret >= 0 else "neg"
@@ -596,7 +782,7 @@ def main():
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <meta http-equiv="refresh" content="1800">
-    <title>마스터 관제탑 V6.0</title>
+    <title>마스터 관제탑 V6.1</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {{ font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #070b14; color: #f8fafc; margin: 0; padding: 12px; max-width: 600px; margin: auto; }}
@@ -659,7 +845,7 @@ def main():
 </head>
 <body>
     <div class="top-hd">
-        <div class="top-title">🛡️ 마스터 비주얼 관제탑 V6.0</div>
+        <div class="top-title">🛡️ 마스터 비주얼 관제탑 V6.1</div>
         <div class="top-sync">동기화: {now_str} (₩{krw_p:,.1f})</div>
     </div>
 
@@ -738,6 +924,24 @@ def main():
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html)
 
+    # 다크모드 인포그래픽 PNG 이미지 생성
+    stocks_info = [
+        {"name": "US RAM (6,460주)", "price_str": f"${ram_p:.2f} ({ram['pct']:+.2f}%) {ram['session']}", "my_ret": ram_total_ret, "m": ram, "color": "#38bdf8"},
+        {"name": "KR 코스닥150레버", "price_str": f"₩{kq['curr']:,.0f} ({kq['pct']:+.2f}%)", "my_ret": kq["ret_pct"], "m": kq, "color": "#f87171"},
+        {"name": "KR 와이지-원", "price_str": f"₩{yg['curr']:,.0f} ({yg['pct']:+.2f}%)", "my_ret": yg["ret_pct"], "m": yg, "color": "#fbbf24"},
+        {"name": "KR 오름테라퓨틱", "price_str": f"₩{or1['curr']:,.0f} ({or1['pct']:+.2f}%)", "my_ret": or1["ret_pct"], "m": or1, "color": "#c084fc"},
+        {"name": "KR 앱클론", "price_str": f"₩{ab['curr']:,.0f} ({ab['pct']:+.2f}%)", "my_ret": ab["ret_pct"], "m": ab, "color": "#4ade80"}
+    ]
+    img_path = "dashboard_card.png"
+    try:
+        generate_dashboard_png(
+            img_path, now_str, krw_p, total_eval_krw, total_pnl_krw,
+            stock_ret_pct, total_asset_ret_pct, stock_eval_krw, rem_cash_eval,
+            primary_live_data, stocks_info, img_events
+        )
+    except Exception as e:
+        print("PNG generation error:", e)
+
     today_str = now_kst.strftime("%Y-%m-%d")
     curr_hour = now_kst.hour
     slot = "AM" if (8 <= curr_hour <= 10) else ("PM" if (22 <= curr_hour <= 23) else "")
@@ -755,46 +959,51 @@ def main():
 
     if TOKEN and CHAT_ID and (is_scheduled_slot or is_manual_run or any_buy_alert):
         header_prefix = "🚨 <b>[긴급 타점/스탑 시그널 포착!]</b>\n" if (any_buy_alert and not is_scheduled_slot) else ""
-        tg_msg = (
-            f"{header_prefix}🛡️ <b>[V6.0 비주얼 관제탑] {now_str}</b>\n"
-            f"━━━━━━━━━━━━━━━━━━\n"
-            f"💰 총자산: <b>{total_eval_krw//10000:,}만 원</b> (잔여현금 {rem_cash_eval//10000:,}만)\n"
-            f"📊 총손익: <b>{total_pnl_krw//10000:+,}만 원 ({stock_ret_pct:+.2f}%)</b> | ₩{krw_p:,.1f}\n\n"
+        caption_msg = (
+            f"{header_prefix}🛡️ <b>[V6.1 다크모드 인포그래픽 브리핑]</b>\n"
+            f"⏰ {now_str} | 총자산: <b>{total_eval_krw//10000:,}만 원</b> (현금 {rem_cash_eval//10000:,}만)\n\n"
             f"{tranche_tg}\n\n"
-            f"🚦 <b>[5대 종목 4중 검증 타점 보드]</b>\n"
-            f"<blockquote>🇺🇸 <b>RAM</b> (${ram_p:.2f} | {ram['pct']:+.2f}%) {ram['session']}\n"
-            f"{ram['blocks']} <b>{ram['score']}/4점</b> | <b>{ram['short_st']}</b>\n"
-            f"🌡️RSI {ram['rsi']:.1f}(기준35) | 📏이격 {ram['disp']:+.1f}%(-9%)\n"
-            f"{ram['chk']}\n\n"
-            f"🇰🇷 <b>코스닥레버</b> (₩{kq['curr']:,.0f} | {kq['pct']:+.2f}%)\n"
-            f"{kq['blocks']} <b>{kq['score']}/4점</b> | <b>{kq['short_st']}</b> | RSI {kq['rsi']:.1f} | 이격 {kq['disp']:+.1f}%\n\n"
-            f"🔧 <b>와이지-원</b> (₩{yg['curr']:,.0f} | {yg['pct']:+.2f}%)\n"
-            f"{yg['blocks']} <b>{yg['score']}/4점</b> | <b>{yg['short_st']}</b> | RSI {yg['rsi']:.1f} | 이격 {yg['disp']:+.1f}%\n\n"
-            f"🧬 <b>오름테라</b> (₩{or1['curr']:,.0f} | {or1['pct']:+.2f}%)\n"
-            f"{or1['blocks']} <b>{or1['score']}/4점</b> | <b>{or1['short_st']}</b> | RSI {or1['rsi']:.1f} | 이격 {or1['disp']:+.1f}%\n\n"
-            f"🧬 <b>앱클론</b> (₩{ab['curr']:,.0f} | {ab['pct']:+.2f}%)\n"
-            f"{ab['blocks']} <b>{ab['score']}/4점</b> | <b>{ab['short_st']}</b> | RSI {ab['rsi']:.1f} | 이격 {ab['disp']:+.1f}%</blockquote>\n\n"
             f"📅 <b>[임박 일정 D-Day]</b>\n{dday_tg}\n\n"
-            f"📰 <b>[핵심 속보]</b>\n{news_tg}"
+            f"📰 <b>[최근 48시간 속보]</b>\n{news_tg}"
         )
 
         inline_kb = {
             "inline_keyboard": [
-                [{"text": "📊 V6.0 비주얼 웹 관제탑 열기 (미니차트·게이지)", "url": DASHBOARD_URL}]
+                [{"text": "📊 V6.1 인터랙티브 웹 관제탑 열기", "url": DASHBOARD_URL}]
             ]
         }
 
-        requests.post(
-            f"https://api.telegram.org/bot{TOKEN}/sendMessage",
-            json={
-                "chat_id": CHAT_ID,
-                "text": tg_msg,
-                "parse_mode": "HTML",
-                "disable_web_page_preview": True,
-                "reply_markup": inline_kb
-            },
-            timeout=10
-        )
+        sent_ok = False
+        if os.path.exists(img_path):
+            try:
+                with open(img_path, "rb") as photo_file:
+                    resp = requests.post(
+                        f"https://api.telegram.org/bot{TOKEN}/sendPhoto",
+                        data={
+                            "chat_id": CHAT_ID,
+                            "caption": caption_msg[:1020],
+                            "parse_mode": "HTML",
+                            "reply_markup": json.dumps(inline_kb)
+                        },
+                        files={"photo": photo_file},
+                        timeout=15
+                    )
+                    sent_ok = (resp.status_code == 200)
+            except Exception:
+                sent_ok = False
+
+        if not sent_ok:
+            requests.post(
+                f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+                json={
+                    "chat_id": CHAT_ID,
+                    "text": caption_msg,
+                    "parse_mode": "HTML",
+                    "disable_web_page_preview": True,
+                    "reply_markup": inline_kb
+                },
+                timeout=10
+            )
 
         if is_scheduled_slot:
             with open("last_sent.txt", "w", encoding="utf-8") as lf:
