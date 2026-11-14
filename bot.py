@@ -12,9 +12,9 @@ QUIET_NIGHT_MODE = True
 CACHE_BUST = datetime.datetime.now().strftime("%m%d%H%M")
 DASHBOARD_URL = f"https://{GITHUB_REPO.split('/')[0]}.github.io/{GITHUB_REPO.split('/')[1]}/?v={CACHE_BUST}" if '/' in GITHUB_REPO else f"https://nojae36.github.io/stock-briefing/?v={CACHE_BUST}"
 
-# [1] 기존 코어 보유 포트폴리오 (기존 RAM 5,854주와 신규 LIVE 606주가 합산되어 MTS 6,460주 평단 $9.6926 자동 산출)
+# [1] 기존 코어 보유 포트폴리오 (금요일 종가 $5.91 반영, 신규 606주와 합산 시 6,460주 평단 $9.6926)
 PORTFOLIO = {
-    "RAM": {"name": "RAM (DRAM 2X)", "symbol": "RAM", "avg_usd": 10.0779, "qty": 5854, "fallback_usd": 5.97},
+    "RAM": {"name": "RAM (DRAM 2X)", "symbol": "RAM", "avg_usd": 10.0779, "qty": 5854, "fallback_usd": 5.91},
     "KODEX_LEV": {"name": "코스닥150레버리지", "tickers": ["233740.KS"], "avg_krw": 6152, "qty": 3354, "fallback_krw": 4300},
     "YG1": {"name": "와이지-원", "tickers": ["019210.KQ", "019210.KS"], "avg_krw": 12910, "qty": 656, "fallback_krw": 9820},
     "ORUM1": {"name": "오름테라퓨틱(계좌1)", "tickers": ["475830.KQ", "475830.KS"], "avg_krw": 107113, "qty": 1097, "fallback_krw": 14830},
@@ -32,7 +32,7 @@ CUSTOM_PARAMS = {
     "ABCLON": {"rsi_cut": 32.0, "disp_cut": -11.0}
 }
 
-# [3] 신규 스윙 물량(트랑셰) 자동 계산 리스트 (RAM 606주 $5.97 실전 LIVE 반영 완료)
+# [3] 신규 스윙 물량(트랑셰) 리스트 (RAM 606주 $5.97 실전 LIVE 반영)
 NEW_TRANCHES = [
     {
         "mode": "LIVE",
@@ -52,8 +52,8 @@ NEW_TRANCHES = [
         "symbol": "233740.KS",
         "base_key": "KODEX_LEV",
         "currency": "KRW",
-        "entry_date": "2026-11-13",
-        "entry_price": 4100,
+        "entry_date": "2026-11-16",
+        "entry_price": 4050,
         "qty": 850,
         "target_pct": 12.0,
         "trail_pct": -6.0
@@ -70,6 +70,49 @@ KEY_EVENTS = [
     {"date": "2027-01-22", "cat": "💾DRAM", "title": "SK하이닉스 2026 4Q 실적발표 (HBM3E·HBM4 가이던스)"}
 ]
 
+def make_ visual_gauge(curr, low, high, length=10):
+    if high <= low:
+        return "[" + "─" * length + "]"
+    ratio = (curr - low) / (high - low)
+    ratio = max(0.0, min(1.0, ratio))
+    idx = int(round(ratio * (length - 1)))
+    bar = ""
+    for i in range(length):
+        if i < idx:
+            bar += "━"
+        elif i == idx:
+            bar += "●"
+        else:
+            bar += "─"
+    return f"[{bar}]"
+
+def make_score_blocks(score, rsi):
+    if rsi > 72:
+        return "🟥🟥🟥🟥"
+    filled = "🟩" * score
+    empty = "⬜" * (4 - score)
+    return filled + empty
+
+def make_sparkline_svg(prices, color="#38bdf8"):
+    if not prices or len(prices) < 2:
+        return ""
+    mn, mx = min(prices), max(prices)
+    rng = (mx - mn) if mx > mn else 1.0
+    w, h = 86, 28
+    pts = []
+    for i, p in enumerate(prices):
+        x = (i / (len(prices) - 1)) * (w - 8) + 4
+        y = h - 4 - ((p - mn) / rng) * (h - 8)
+        pts.append(f"{x:.1f},{y:.1f}")
+    last_x, last_y = pts[-1].split(",")
+    poly = " ".join(pts)
+    return (
+        f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" style="overflow:visible;">'
+        f'<polyline fill="none" stroke="{color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" points="{poly}"/>'
+        f'<circle cx="{last_x}" cy="{last_y}" r="3" fill="{color}"/>'
+        f'</svg>'
+    )
+
 def build_dday_section(now_kst):
     today = now_kst.date()
     html_badges, tg_lines = [], []
@@ -80,13 +123,14 @@ def build_dday_section(now_kst):
             continue
         dday_str = "D-DAY" if diff == 0 else f"D-{diff}"
         urgent_cls = "dday-urgent" if diff <= 7 else "dday-normal"
+        tg_prefix = "🔥" if diff <= 7 else ""
         html_badges.append(
             f'<div class="dday-row"><span class="dday-tag {urgent_cls}">{dday_str}</span>'
             f'<span class="dday-cat">{ev["cat"]}</span>'
             f'<span class="dday-title">{ev["title"]} <span class="sub">({ev["date"][5:]})</span></span></div>'
         )
         if len(tg_lines) < 4:
-            tg_lines.append(f"• <b>[{dday_str}]</b> {ev['cat']} {ev['title']} ({ev['date'][5:]})")
+            tg_lines.append(f"• <b>[{tg_prefix}{dday_str}]</b> {ev['cat']} {ev['title']} ({ev['date'][5:]})")
     return "".join(html_badges), "\n".join(tg_lines)
 
 def get_quad_verified_metrics(tickers, rsi_cut=35.0, disp_cut=-9.0, is_core_cash_target=True):
@@ -134,6 +178,8 @@ def get_quad_verified_metrics(tickers, rsi_cut=35.0, disp_cut=-9.0, is_core_cash
             highs = df['High'] if 'High' in df else closes
             lows = df['Low'] if 'Low' in df else closes
             vols = df['Volume'] if 'Volume' in df else closes * 0
+
+            spark_prices = [float(x) for x in closes.tail(20).values]
 
             pct = ((curr - prev) / prev) * 100 if prev > 0 else 0.0
             ext_pct = ((curr - reg_curr) / reg_curr) * 100 if reg_curr > 0 else 0.0
@@ -183,7 +229,8 @@ def get_quad_verified_metrics(tickers, rsi_cut=35.0, disp_cut=-9.0, is_core_cash
             c4_volume = (vol_ratio >= 1.2 and bullish_rebound) or (bullish_rebound and rsi < (rsi_cut - 6.0))
 
             score = int(c1_oversold) + int(c2_support) + int(c3_momentum) + int(c4_volume)
-            chk_str = f"[{'O' if c1_oversold else 'X'}과매도 | {'O' if c2_support else 'X'}지지 | {'O' if c3_momentum else 'X'}MACD | {'O' if c4_volume else 'X'}수급]"
+            blocks = make_score_blocks(score, rsi)
+            chk_icons = f"{'🟢' if c1_oversold else '⚫'}과매도 {'🟢' if c2_support else '⚫'}지지 {'🟢' if c3_momentum else '⚫'}MACD {'🟢' if c4_volume else '⚫'}수급"
 
             is_buy_alert = False
             if c1_oversold and score == 4:
@@ -192,30 +239,30 @@ def get_quad_verified_metrics(tickers, rsi_cut=35.0, disp_cut=-9.0, is_core_cash
                 is_buy_alert = True
             elif c1_oversold and score == 3 and (c3_momentum or c4_volume):
                 sig, short_st = f"✅ 1차 검증타점 ({score}/4)", "✅타점진입"
-                cash = "신규 트랑셰 350만 원 투입" if is_core_cash_target else "단기 반등 타점 (소액 스윙)"
+                cash = "신규 트랑셰 300만 원 투입" if is_core_cash_target else "단기 반등 타점 (소액 스윙)"
                 is_buy_alert = True
             elif c1_oversold and score <= 2:
                 sig, short_st, cash = f"⚠️ 하락칼날 주의 ({score}/4)", "⚠️칼날주의", "추가매수 대기 (반등 미확인)"
             elif rsi > 72:
                 sig, short_st, cash = f"🚨 단기 과열 ({score}/4)", "🚨과열주의", "신규 606주 익절 & 기존분 역물타기"
             else:
-                sig, short_st, cash = f"⏸ 중립·관망 ({score}/4)", "⏸관망중", "1차 606주 스윙 감시 · 잔여현금 대기"
+                sig, short_st, cash = f"⏸ 중립·관망 ({score}/4)", "⏸관망중", "1차 606주 감시 · 잔여현금 대기"
 
             return {
                 "curr": curr, "reg_curr": reg_curr, "pct": pct, "ext_pct": ext_pct,
                 "session": session_tag, "rsi": rsi, "ma20": ma20, "disp": disp20,
                 "pct_b": pct_b, "macd_turn": macd_turn, "vol_ratio": vol_ratio,
                 "c1": c1_oversold, "c2": c2_support, "c3": c3_momentum, "c4": c4_volume,
-                "rsi_cut": rsi_cut, "disp_cut": disp_cut,
-                "score": score, "chk": chk_str, "sig": sig, "short_st": short_st, "cash": cash, "alert": is_buy_alert
+                "rsi_cut": rsi_cut, "disp_cut": disp_cut, "spark": spark_prices,
+                "score": score, "blocks": blocks, "chk": chk_icons, "sig": sig, "short_st": short_st, "cash": cash, "alert": is_buy_alert
             }
         except Exception:
             continue
     return {
         "curr": 0.0, "reg_curr": 0.0, "pct": 0.0, "ext_pct": 0.0, "session": "대기",
         "rsi": 50.0, "ma20": 0.0, "disp": 0.0, "pct_b": 0.5, "macd_turn": False, "vol_ratio": 1.0,
-        "c1": False, "c2": False, "c3": False, "c4": False, "rsi_cut": rsi_cut, "disp_cut": disp_cut,
-        "score": 0, "chk": "[대기]", "sig": "데이터 대기", "short_st": "⏸대기", "cash": "0원", "alert": False
+        "c1": False, "c2": False, "c3": False, "c4": False, "rsi_cut": rsi_cut, "disp_cut": disp_cut, "spark": [],
+        "score": 0, "blocks": "⬜⬜⬜⬜", "chk": "대기", "sig": "데이터 대기", "short_st": "⏸대기", "cash": "0원", "alert": False
     }
 
 def evaluate_new_tranches(price_map, krw_rate):
@@ -251,8 +298,15 @@ def evaluate_new_tranches(price_map, krw_rate):
 
             target_p = entry_p * (1.0 + target_pct / 100.0)
             stop_p = peak_p * (1.0 + trail_pct / 100.0)
+            half_target_p = entry_p * 1.12
 
             ret_entry = ((curr_p - entry_p) / entry_p) * 100.0 if entry_p > 0 else 0.0
+            dist_to_target = ((target_p - curr_p) / curr_p) * 100.0 if curr_p > 0 else 0.0
+            dist_to_stop = ((curr_p - stop_p) / curr_p) * 100.0 if curr_p > 0 else 0.0
+
+            pos_pct = 0
+            if target_p > stop_p:
+                pos_pct = int(max(3.0, min(97.0, ((curr_p - stop_p) / (target_p - stop_p)) * 100.0)))
 
             if is_usd:
                 cost_usd = entry_p * qty
@@ -284,14 +338,14 @@ def evaluate_new_tranches(price_map, krw_rate):
                 b_avg = b_item.get("avg_usd", b_item.get("avg_krw", 0))
                 new_total_qty = b_qty + qty
                 blended_avg = ((b_avg * b_qty) + (entry_p * qty)) / new_total_qty
-                blended_note = f"MTS 합산 {new_total_qty:,}주 · 평단 {avg_fmt(blended_avg)}"
+                blended_note = f"MTS 합산: {new_total_qty:,}주 · 평단 {avg_fmt(blended_avg)}"
 
             if not is_live:
-                badge_html = '<span class="tr-badge tr-sim">🧪 모의 프리뷰 (SIM)</span>'
-                status_str = f"진입가 {p_fmt(entry_p)} 체결 가정 시뮬레이션"
+                badge_html = '<span class="tr-badge tr-sim">🧪 모의 프리뷰</span>'
+                status_str = f"진입가 {p_fmt(entry_p)} 가정 시뮬레이션"
             else:
-                badge_html = '<span class="tr-badge tr-live">🟢 실전 감시 중 (LIVE)</span>'
-                status_str = "🟢 스윙 보유 중 (고점 대비 -7% 스탑 자동 추적)"
+                badge_html = '<span class="tr-badge tr-live">🟢 실전 LIVE</span>'
+                status_str = f"1차 반등선({p_fmt(half_target_p)}) 303주 예약매도 권장"
                 if curr_p <= stop_p:
                     status_str = f"🚨 트레일링 스탑 도달! ({p_fmt(stop_p)} 이하 매도)"
                     exit_alert = True
@@ -304,24 +358,38 @@ def evaluate_new_tranches(price_map, krw_rate):
                 <div class="tr-box">
                     <div class="sig-hd">
                         <div><b>{tr['name']}</b> ({qty:,}주) {badge_html}</div>
-                        <div class="{ret_cls}">{ret_entry:+.2f}%</div>
+                        <div class="{ret_cls}" style="font-size:0.9rem;">{ret_entry:+.2f}%</div>
                     </div>
-                    <div class="tr-grid">
-                        <div class="m-cell"><span class="sub">진입단가 / 현재가</span><br><b>{p_fmt(entry_p)}</b> ➔ <b>{p_fmt(curr_p)}</b></div>
-                        <div class="m-cell"><span class="sub">🎯 목표익절 ({target_pct:+.0f}%)</span><br><b class="pos">{p_fmt(target_p)}</b></div>
-                        <div class="m-cell"><span class="sub">🛡️ 스탑단가 ({trail_pct:+.0f}%)</span><br><b class="neg">{p_fmt(stop_p)}</b> <span class="sub">(고점 {p_fmt(peak_p)})</span></div>
+                    <div class="range-wrap">
+                        <div class="range-labels">
+                            <span class="neg">🛡️스탑 {p_fmt(stop_p)}</span>
+                            <span style="color:#38bdf8;font-weight:bold;">현재 {p_fmt(curr_p)}</span>
+                            <span class="pos">🎯목표 {p_fmt(target_p)}</span>
+                        </div>
+                        <div class="range-track">
+                            <div class="range-fill" style="width:{pos_pct}%;"></div>
+                            <div class="range-dot" style="left:{pos_pct}%;"></div>
+                        </div>
+                        <div class="range-Labels-sub">
+                            <span>스탑까지 -{dist_to_stop:.1f}% 여유</span>
+                            <span>익절까지 +{dist_to_target:.1f}% 남음</span>
+                        </div>
                     </div>
                     <div class="tr-ft">
-                        <span>트랑셰 단독 손익: <b class="{ret_cls}">{pnl_str}</b> (투입원금 {cost_krw//10000:,}만)</span>
+                        <span>단독 손익: <b class="{ret_cls}">{pnl_str}</b> (원금 {cost_krw//10000:,}만)</span>
                     </div>
                     <div class="sub" style="margin-top:4px;">💡 {blended_note} | {status_str}</div>
                 </div>""")
 
-            mode_tag = "[실전LIVE]" if is_live else "[프리뷰]"
-            tg_rows.append(
-                f"• <b>{mode_tag} {tr['name']} ({qty:,}주)</b>: 진입 {p_fmt(entry_p)} ➔ 현재 {p_fmt(curr_p)} (<b>{ret_entry:+.2f}%</b> / {pnl_krw//10000:+,}만)\n"
-                f"  🎯익절가 <b>{p_fmt(target_p)}</b> | 🛡️스탑가 <b>{p_fmt(stop_p)}</b> | {blended_note}"
-            )
+            if is_live:
+                gauge_bar = make_visual_gauge(curr_p, stop_p, target_p, 10)
+                tg_rows.append(
+                    f"🎯 <b>[실전 스윙 감시] {tr['name']} ({qty:,}주)</b>\n"
+                    f"<blockquote>진입 {p_fmt(entry_p)} ➔ 현재 <b>{p_fmt(curr_p)} ({ret_entry:+.2f}% / {pnl_krw//10000:+,}만)</b>\n"
+                    f"🛡️{p_fmt(stop_p)} <code>{gauge_bar}</code> 🎯{p_fmt(target_p)}\n"
+                    f"• 목표({p_fmt(target_p)})까지 <b>+{dist_to_target:.1f}%</b> | 스탑({p_fmt(stop_p)})까지 <b>-{dist_to_stop:.1f}% 여유</b>\n"
+                    f"• {blended_note}</blockquote>"
+                )
         except Exception:
             continue
 
@@ -368,8 +436,8 @@ def render_quick_tile(short_name, m):
     return f"""
         <div class="q-tile {tile_cls}">
             <div class="q-name">{short_name}</div>
-            <div class="q-score">{m['score']}/4점</div>
-            <div class="q-st">{m['short_st']}</div>
+            <div class="q-score">{m['blocks']}</div>
+            <div class="q-st">{m['short_st']} ({m['score']}/4)</div>
         </div>"""
 
 def render_sig_card(title, price_badge, my_ret_str, m, border_color):
@@ -381,24 +449,28 @@ def render_sig_card(title, price_badge, my_ret_str, m, border_color):
     p2_cls = "pill-on" if m["c2"] else "pill-off"
     p3_cls = "pill-on" if m["c3"] else "pill-off"
     p4_cls = "pill-on" if m["c4"] else "pill-off"
+    spark_svg = make_sparkline_svg(m.get("spark", []), border_color)
 
     return f"""
         <div class="sig-box" style="border-left-color:{border_color};">
             <div class="sig-hd">
-                <div><b>{title}</b> {price_badge}</div>
-                <div class="my-ret">{my_ret_str}</div>
+                <div>
+                    <b>{title}</b> {price_badge}<br>
+                    <span class="sub">20일 추세 &amp; 내 수익:</span> {my_ret_str}
+                </div>
+                <div style="text-align:right;">{spark_svg}</div>
             </div>
             <div class="bar-bg"><div class="bar-fill" style="width:{bar_w}%;background:{bar_color};"></div></div>
             <div class="metric-grid">
-                <div class="m-cell"><span class="sub">RSI(14)</span><br><b>{m['rsi']:.1f}</b> <span class="sub">(기준 {m['rsi_cut']:.0f})</span></div>
-                <div class="m-cell"><span class="sub">20일 이격도</span><br><b>{m['disp']:+.1f}%</b> <span class="sub">({m['disp_cut']:.0f}%)</span></div>
+                <div class="m-cell"><span class="sub">RSI(14)</span><br><b>{m['rsi']:.1f}</b> <span class="sub">({m['rsi_cut']:.0f})</span></div>
+                <div class="m-cell"><span class="sub">20일 이격</span><br><b>{m['disp']:+.1f}%</b> <span class="sub">({m['disp_cut']:.0f}%)</span></div>
                 <div class="m-cell"><span class="sub">볼린저 %B</span><br><b>{m['pct_b']:.2f}</b></div>
-                <div class="m-cell"><span class="sub">거래량(20일)</span><br><b>{m['vol_ratio']:.1f}배</b></div>
+                <div class="m-cell"><span class="sub">거래량</span><br><b>{m['vol_ratio']:.1f}배</b></div>
             </div>
             <div class="pill-row">
                 <span class="pill {p1_cls}">{'🟢' if m['c1'] else '⚫'} 과매도</span>
                 <span class="pill {p2_cls}">{'🟢' if m['c2'] else '⚫'} 지지선</span>
-                <span class="pill {p3_cls}">{'🟢' if m['c3'] else '⚫'} MACD반등</span>
+                <span class="pill {p3_cls}">{'🟢' if m['c3'] else '⚫'} MACD↑</span>
                 <span class="pill {p4_cls}">{'🟢' if m['c4'] else '⚫'} 수급유입</span>
             </div>
             <div class="sig-ft">
@@ -428,7 +500,6 @@ def main():
     ram_eval_krw = int(ram_eval_usd * krw_p)
     ram_pnl_krw = ram_eval_krw - ram_cost_krw
 
-    # MTS 합산 RAM 전체 수치 (6,460주 · 평단 $9.6926)
     ram_total_qty = ram_cfg["qty"] + 606
     ram_total_avg = 9.6926
     ram_total_ret = ((ram_p - ram_total_avg) / ram_total_avg) * 100
@@ -468,7 +539,7 @@ def main():
             get_latest_strict_news("오름테라퓨틱 OR 앱클론", "[바이오]", 2))
 
     news_html = "".join([f'<div class="n-item"><div class="n-hd"><span class="tag">{x["tag"]}</span><span class="meta">{x["time"]} | {x["source"]}</span></div><a href="{x["link"]}" target="_blank">{x["title"]}</a></div>' for x in news]) or '<div class="n-item">최근 48시간 내 속보 없음</div>'
-    news_tg = "\n".join([f"• {x['tag']} <a href='{x['link']}'>{x['title']}</a> ({x['source']} {x['time']})" for x in news]) or "• 최근 48시간 내 속보 없음"
+    news_tg = "\n".join([f"• {x['tag']} <a href='{x['link']}'>{x['title']}</a> ({x['time']})" for x in news]) or "• 최근 48시간 내 속보 없음"
 
     pnl_color = "pos" if total_pnl_krw >= 0 else "neg"
     ram_color = "pos" if ram_total_ret >= 0 else "neg"
@@ -488,33 +559,33 @@ def main():
 
     sig_cards_html = (
         render_sig_card(
-            "🇺🇸 RAM (총 6,460주 · $9.6926)",
+            "🇺🇸 RAM (합산 6,460주)",
             f'<span class="badge">{ram["session"]}</span> <span class="sub">${ram_p:.2f} ({ram["pct"]:+.2f}%)</span>',
-            f'<span class="{ram_color}">합산 {ram_total_ret:+.1f}%</span>',
+            f'<span class="{ram_color}">{ram_total_ret:+.1f}% (평단 $9.69)</span>',
             ram, "#38bdf8"
         ) +
         render_sig_card(
             "🇰🇷 KODEX 코스닥150레버리지",
             f'<span class="sub">₩{kq["curr"]:,.0f} ({kq["pct"]:+.2f}%)</span>',
-            f'<span class="{kq_color}">기존 {kq["ret_pct"]:+.1f}%</span>',
+            f'<span class="{kq_color}">{kq["ret_pct"]:+.1f}%</span>',
             kq, "#f87171"
         ) +
         render_sig_card(
-            "🔧 와이지-원 (시드교체 대상)",
+            "🔧 와이지-원",
             f'<span class="sub">₩{yg["curr"]:,.0f} ({yg["pct"]:+.2f}%)</span>',
-            f'<span class="{yg_color}">기존 {yg["ret_pct"]:+.1f}%</span>',
+            f'<span class="{yg_color}">{yg["ret_pct"]:+.1f}%</span>',
             yg, "#fbbf24"
         ) +
         render_sig_card(
             "🧬 오름테라퓨틱",
             f'<span class="sub">₩{or1["curr"]:,.0f} ({or1["pct"]:+.2f}%)</span>',
-            f'<span class="{or1_color}">계좌1 {or1["ret_pct"]:+.1f}%</span>',
+            f'<span class="{or1_color}">{or1["ret_pct"]:+.1f}%</span>',
             or1, "#c084fc"
         ) +
         render_sig_card(
             "🧬 앱클론",
             f'<span class="sub">₩{ab["curr"]:,.0f} ({ab["pct"]:+.2f}%)</span>',
-            f'<span class="{ab_color}">기존 {ab["ret_pct"]:+.1f}%</span>',
+            f'<span class="{ab_color}">{ab["ret_pct"]:+.1f}%</span>',
             ab, "#4ade80"
         )
     )
@@ -525,7 +596,7 @@ def main():
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <meta http-equiv="refresh" content="1800">
-    <title>마스터 관제탑 V5.7</title>
+    <title>마스터 관제탑 V6.0</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body {{ font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #070b14; color: #f8fafc; margin: 0; padding: 12px; max-width: 600px; margin: auto; }}
@@ -543,8 +614,8 @@ def main():
         .q-hot {{ background: rgba(248, 113, 113, 0.15); border-color: #f87171; }}
         .q-wait {{ background: #131c31; border-color: #1e293b; }}
         .q-name {{ font-size: 0.72rem; font-weight: 700; color: #e2e8f0; margin-bottom: 2px; }}
-        .q-score {{ font-size: 0.85rem; font-weight: 800; color: #38bdf8; }}
-        .q-st {{ font-size: 0.68rem; color: #cbd5e1; margin-top: 2px; }}
+        .q-score {{ font-size: 0.72rem; letter-spacing: -1px; margin: 2px 0; }}
+        .q-st {{ font-size: 0.66rem; color: #cbd5e1; }}
         .card {{ background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 14px; margin-bottom: 14px; }}
         h2 {{ font-size: 0.92rem; margin: 0 0 10px 0; padding-bottom: 6px; border-bottom: 1px solid #1f2937; color: #38bdf8; display: flex; justify-content: space-between; align-items: center; }}
         .row {{ display: flex; justify-content: space-between; font-size: 0.82rem; padding: 7px 0; border-bottom: 1px dashed #1f2937; align-items: center; }}
@@ -562,10 +633,15 @@ def main():
         .tr-badge {{ padding: 2px 6px; border-radius: 4px; font-size: 0.68rem; font-weight: bold; margin-left: 4px; }}
         .tr-sim {{ background: rgba(251, 191, 36, 0.18); color: #fbbf24; border: 1px solid #fbbf24; }}
         .tr-live {{ background: rgba(74, 222, 128, 0.18); color: #4ade80; border: 1px solid #4ade80; }}
-        .tr-grid {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: #0f172a; padding: 8px; border-radius: 6px; margin-bottom: 8px; text-align: center; font-size: 0.75rem; }}
+        .range-wrap {{ background: #0f172a; padding: 10px; border-radius: 8px; margin: 8px 0; }}
+        .range-labels {{ display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 6px; }}
+        .range-track {{ position: relative; height: 8px; background: #1e293b; border-radius: 4px; margin-bottom: 6px; }}
+        .range-fill {{ height: 100%; background: linear-gradient(90deg, #f87171, #38bdf8, #4ade80); border-radius: 4px; }}
+        .range-dot {{ position: absolute; top: -4px; width: 16px; height: 16px; background: #fff; border: 3px solid #38bdf8; border-radius: 50%; transform: translateX(-50%); box-shadow: 0 0 6px rgba(56,189,248,0.8); }}
+        .range-Labels-sub {{ display: flex; justify-content: space-between; font-size: 0.68rem; color: #94a3b8; }}
         .tr-ft {{ display: flex; justify-content: space-between; align-items: center; padding-top: 4px; border-top: 1px solid #26334d; font-size: 0.78rem; }}
         .sig-hd {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }}
-        .my-ret {{ font-size: 0.78rem; background: #0f172a; padding: 2px 7px; border-radius: 4px; }}
+        .my-ret {{ font-size: 0.75rem; font-weight: bold; }}
         .bar-bg {{ width: 100%; height: 5px; background: #0f172a; border-radius: 3px; overflow: hidden; margin-bottom: 8px; }}
         .bar-fill {{ height: 100%; border-radius: 3px; }}
         .metric-grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: #0f172a; padding: 6px; border-radius: 6px; margin-bottom: 8px; text-align: center; font-size: 0.75rem; }}
@@ -583,8 +659,8 @@ def main():
 </head>
 <body>
     <div class="top-hd">
-        <div class="top-title">🛡️ 마스터 관제탑 V5.7</div>
-        <div class="top-sync">동기화: {now_str} (환율 ₩{krw_p:,.1f})</div>
+        <div class="top-title">🛡️ 마스터 비주얼 관제탑 V6.0</div>
+        <div class="top-sync">동기화: {now_str} (₩{krw_p:,.1f})</div>
     </div>
 
     <div class="kpi-grid">
@@ -606,7 +682,7 @@ def main():
         <div class="kpi-box">
             <div class="kpi-lbl">주식 평가액 / 잔여 현금</div>
             <div class="kpi-val">{stock_eval_krw//10000:,}만 / <span style="color:#4ade80;">{rem_cash_eval//10000:,}만</span></div>
-            <div class="kpi-sub">RAM 1차(483만) 실전 투입 완료</div>
+            <div class="kpi-sub">RAM 1차(606주) 실전 감시 중</div>
         </div>
     </div>
 
@@ -615,7 +691,7 @@ def main():
     </div>
 
     <div class="card">
-        <h2>🛡️ 신규 스윙 트랑셰 자동 익절·스탑 계산기 (장부분리)</h2>
+        <h2>🛡️ 신규 스윙 트랑셰 위치 트래커 (스탑 ➔ 목표)</h2>
         {tranche_html}
     </div>
 
@@ -625,12 +701,12 @@ def main():
     </div>
 
     <div class="card">
-        <h2>🎯 5대 종목 4중 검증 타점 스위치 (RAM 단독 기준)</h2>
+        <h2>🎯 5대 종목 20일 추세 &amp; 4중 검증 스위치</h2>
         {sig_cards_html}
     </div>
 
     <div class="card">
-        <h2>💼 보유 종목 상세 평가 & 포트폴리오 비중</h2>
+        <h2>💼 보유 종목 상세 평가 &amp; 포트폴리오 비중</h2>
         <div style="width:210px;margin:0 auto 12px auto;"><canvas id="pfChart"></canvas></div>
         <div class="row"><span><b>RAM 합산</b> (6,460주 · 평단 $9.6926) <span class="badge">{ram['session']}</span><br><span class="sub">기존 5,854주($10.08) + 신규 606주($5.97) | 현재 ${ram_p:.2f}</span></span><span class="{ram_color}" style="text-align:right;">{ram_total_ret:+.2f}% ({(ram_pnl_krw + live_tr_pnl)//10000:+,}만)<br>${ram_p * ram_total_qty:,.0f} ({ram_combined_eval_krw//10000:,}만)</span></div>
         <div class="row"><span><b>코스닥150레버리지</b> (3,354주 · 평단 6,152원)<br><span class="sub">현재 ₩{kq['curr']:,.0f} ({kq['pct']:+.2f}%)</span></span><span class="{kq_color}" style="text-align:right;">{kq['ret_pct']:+.2f}% ({kq['pnl_krw']//10000:+,}만)<br>{kq['eval_krw']:,}원</span></div>
@@ -678,24 +754,47 @@ def main():
     any_buy_alert = any([ram["alert"], kq["alert"], yg["alert"], or1["alert"], ab["alert"], tranche_alert]) and not is_quiet_hour
 
     if TOKEN and CHAT_ID and (is_scheduled_slot or is_manual_run or any_buy_alert):
-        header_prefix = "🚨 <b>[긴급 매수/청산 시그널 포착!]</b>\n" if (any_buy_alert and not is_scheduled_slot) else ""
-        tranche_section = f"\n🛡️ <b>신규 스윙 트랑셰 익절·스탑 계산기</b>\n{tranche_tg}\n" if tranche_tg else ""
+        header_prefix = "🚨 <b>[긴급 타점/스탑 시그널 포착!]</b>\n" if (any_buy_alert and not is_scheduled_slot) else ""
         tg_msg = (
-            f"{header_prefix}🛡️ <b>[마스터 관제탑 V5.7] RAM 1차(606주) 실전 가동</b>\n"
-            f"⏰ {now_str} (환율 ₩{krw_p:,.1f})\n"
-            f"💰 총자산: <b>{total_eval_krw//10000:,}만 원</b> | 잔여현금: <b>{rem_cash_eval//10000:,}만 원</b>\n"
-            f"👉 <a href='{DASHBOARD_URL}'>터치하여 V5.7 콕핏 대시보드 열기</a>\n\n"
-            f"📅 <b>다가오는 반도체·바이오 핵심 일정</b>\n{dday_tg}\n"
-            f"{tranche_section}\n"
-            f"🎯 <b>5대 종목 맞춤 4중 검증 시그널</b>\n"
-            f"• <b>RAM [{ram['session']}]</b>: ${ram_p:.2f} | RSI {ram['rsi']:.1f} | 이격 {ram['disp']:+.1f}% ➔ <b>{ram['sig']}</b>\n"
-            f"• <b>코스닥레버리지</b>: RSI {kq['rsi']:.1f} | 이격 {kq['disp']:+.1f}% ➔ <b>{kq['sig']}</b>\n"
-            f"• <b>와이지-원</b>: RSI {yg['rsi']:.1f} | 이격 {yg['disp']:+.1f}% ➔ <b>{yg['sig']}</b>\n"
-            f"• <b>오름테라퓨틱</b>: RSI {or1['rsi']:.1f} | 이격 {or1['disp']:+.1f}% ➔ <b>{or1['sig']}</b>\n"
-            f"• <b>앱클론</b>: RSI {ab['rsi']:.1f} | 이격 {ab['disp']:+.1f}% ➔ <b>{ab['sig']}</b>\n\n"
-            f"📰 <b>최근 48시간 핵심 속보</b>\n{news_tg}"
+            f"{header_prefix}🛡️ <b>[V6.0 비주얼 관제탑] {now_str}</b>\n"
+            f"━━━━━━━━━━━━━━━━━━\n"
+            f"💰 총자산: <b>{total_eval_krw//10000:,}만 원</b> (잔여현금 {rem_cash_eval//10000:,}만)\n"
+            f"📊 총손익: <b>{total_pnl_krw//10000:+,}만 원 ({stock_ret_pct:+.2f}%)</b> | ₩{krw_p:,.1f}\n\n"
+            f"{tranche_tg}\n\n"
+            f"🚦 <b>[5대 종목 4중 검증 타점 보드]</b>\n"
+            f"<blockquote>🇺🇸 <b>RAM</b> (${ram_p:.2f} | {ram['pct']:+.2f}%) {ram['session']}\n"
+            f"{ram['blocks']} <b>{ram['score']}/4점</b> | <b>{ram['short_st']}</b>\n"
+            f"🌡️RSI {ram['rsi']:.1f}(기준35) | 📏이격 {ram['disp']:+.1f}%(-9%)\n"
+            f"{ram['chk']}\n\n"
+            f"🇰🇷 <b>코스닥레버</b> (₩{kq['curr']:,.0f} | {kq['pct']:+.2f}%)\n"
+            f"{kq['blocks']} <b>{kq['score']}/4점</b> | <b>{kq['short_st']}</b> | RSI {kq['rsi']:.1f} | 이격 {kq['disp']:+.1f}%\n\n"
+            f"🔧 <b>와이지-원</b> (₩{yg['curr']:,.0f} | {yg['pct']:+.2f}%)\n"
+            f"{yg['blocks']} <b>{yg['score']}/4점</b> | <b>{yg['short_st']}</b> | RSI {yg['rsi']:.1f} | 이격 {yg['disp']:+.1f}%\n\n"
+            f"🧬 <b>오름테라</b> (₩{or1['curr']:,.0f} | {or1['pct']:+.2f}%)\n"
+            f"{or1['blocks']} <b>{or1['score']}/4점</b> | <b>{or1['short_st']}</b> | RSI {or1['rsi']:.1f} | 이격 {or1['disp']:+.1f}%\n\n"
+            f"🧬 <b>앱클론</b> (₩{ab['curr']:,.0f} | {ab['pct']:+.2f}%)\n"
+            f"{ab['blocks']} <b>{ab['score']}/4점</b> | <b>{ab['short_st']}</b> | RSI {ab['rsi']:.1f} | 이격 {ab['disp']:+.1f}%</blockquote>\n\n"
+            f"📅 <b>[임박 일정 D-Day]</b>\n{dday_tg}\n\n"
+            f"📰 <b>[핵심 속보]</b>\n{news_tg}"
         )
-        requests.post(f"https://api.telegram.org/bot{TOKEN}/sendMessage", json={"chat_id": CHAT_ID, "text": tg_msg, "parse_mode": "HTML", "disable_web_page_preview": True}, timeout=10)
+
+        inline_kb = {
+            "inline_keyboard": [
+                [{"text": "📊 V6.0 비주얼 웹 관제탑 열기 (미니차트·게이지)", "url": DASHBOARD_URL}]
+            ]
+        }
+
+        requests.post(
+            f"https://api.telegram.org/bot{TOKEN}/sendMessage",
+            json={
+                "chat_id": CHAT_ID,
+                "text": tg_msg,
+                "parse_mode": "HTML",
+                "disable_web_page_preview": True,
+                "reply_markup": inline_kb
+            },
+            timeout=10
+        )
 
         if is_scheduled_slot:
             with open("last_sent.txt", "w", encoding="utf-8") as lf:
