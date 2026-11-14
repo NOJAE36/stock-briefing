@@ -4,18 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <meta http-equiv="refresh" content="1800">
-    <title>마스터 관제탑 V6.1</title>
+    <title>마스터 관제탑 V6.2</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #070b14; color: #f8fafc; margin: 0; padding: 12px; max-width: 600px; margin: auto; }
         .top-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .top-title { font-size: 1.1rem; font-weight: 800; color: #38bdf8; }
         .top-sync { font-size: 0.72rem; color: #94a3b8; }
-        .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
         .kpi-box { background: linear-gradient(145deg, #131c31, #0f172a); border: 1px solid #1e293b; border-radius: 10px; padding: 10px; text-align: center; }
         .kpi-lbl { font-size: 0.71rem; color: #94a3b8; margin-bottom: 3px; }
         .kpi-val { font-size: 1.02rem; font-weight: 800; color: #f8fafc; }
         .kpi-sub { font-size: 0.68rem; color: #64748b; margin-top: 2px; }
+        .semi-hd { font-size: 0.75rem; font-weight: 700; color: #fbbf24; margin-bottom: 5px; }
+        .semi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+        .semi-tile { background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 7px 6px; }
+        .semi-top { display: flex; justify-content: space-between; font-size: 0.68rem; color: #cbd5e1; margin-bottom: 3px; }
+        .semi-val { font-size: 0.80rem; font-weight: 800; color: #f8fafc; }
         .q-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-bottom: 14px; }
         .q-tile { border-radius: 8px; padding: 8px 4px; text-align: center; border: 1px solid #1e293b; }
         .q-buy { background: rgba(74, 222, 128, 0.15); border-color: #4ade80; }
@@ -67,8 +72,8 @@
 </head>
 <body>
     <div class="top-hd">
-        <div class="top-title">🛡️ 마스터 비주얼 관제탑 V6.1</div>
-        <div class="top-sync">동기화: 2026-11-14 20:30 KST (₩1,336.2)</div>
+        <div class="top-title">🛡️ 마스터 비주얼 관제탑 V6.2</div>
+        <div class="top-sync">동기화: 2026-11-14 20:44 KST (₩1,336.2)</div>
     </div>
 
     <div class="kpi-grid">
@@ -92,6 +97,11 @@
             <div class="kpi-val">9,653만 / <span style="color:#4ade80;">516만</span></div>
             <div class="kpi-sub">RAM 1차(606주) 실전 감시 중</div>
         </div>
+    </div>
+
+    <div class="semi-hd">⚡ 글로벌 반도체 · HBM 4대 풍향계 (RAM 선행지표)</div>
+    <div class="semi-grid">
+        <div class="semi-tile"><div class="semi-top"><span>엔비디아</span><span class="neg">-3.12%</span></div><div class="semi-val">$161.01</div></div><div class="semi-tile"><div class="semi-top"><span>마이크론</span><span class="neg">-4.66%</span></div><div class="semi-val">$761.20</div></div><div class="semi-tile"><div class="semi-top"><span>삼성전자</span><span class="neg">-0.96%</span></div><div class="semi-val">₩206,000</div></div><div class="semi-tile"><div class="semi-top"><span>SK하이닉스</span><span class="neg">-3.03%</span></div><div class="semi-val">₩1,216,000</div></div>
     </div>
 
     <div class="q-grid">
