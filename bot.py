@@ -12,6 +12,7 @@ TOKEN = os.environ.get('TELEGRAM_TOKEN', '').strip()
 CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '').strip()
 GITHUB_REPO = os.environ.get('GITHUB_REPOSITORY', '').strip().lower()
 EVENT_NAME = os.environ.get('GITHUB_EVENT_NAME', '').strip()
+DART_API_KEY = os.environ.get('DART_API_KEY', '').strip()
 
 QUIET_NIGHT_MODE = True
 
@@ -75,6 +76,7 @@ SEMI_PEERS = [
 
 KEY_EVENTS = [
     {"date": "2026-11-18", "cat": "AI·DRAM", "title": "엔비디아(NVDA) FY27 3Q 실적발표 (HBM 수요 풍향계)"},
+    {"date": "2026-12-07", "cat": "바이오", "title": "미국 혈액암학회(ASH) Late-Breaking 초록 공개"},
     {"date": "2026-12-10", "cat": "매크로", "title": "미국 12월 FOMC 금리결정 및 점도표 발표"},
     {"date": "2026-12-12", "cat": "바이오", "title": "미국 혈액암학회(ASH 2026) 개막 (오름·앱클론 모멘텀)"},
     {"date": "2026-12-17", "cat": "DRAM", "title": "마이크론(MU) FY27 1Q 실적발표 (RAM 직접 모멘텀)"},
@@ -97,7 +99,7 @@ def detect_cloudflare_worker_url():
 
 def sync_state_from_worker(worker_url):
     default_state = {
-        "version": "8.0",
+        "version": "9.0",
         "cashKrw": 5173000,
         "swingVaultKrw": 0,
         "tax": {"realizedGainKrw": 11678483, "harvestedLossKrw": 0, "cetxSold": False},
@@ -106,7 +108,7 @@ def sync_state_from_worker(worker_url):
     if not worker_url:
         return default_state
     try:
-        resp = requests.get(f"{worker_url}?mode=state&t={ CACHE_BUST }", timeout=8)
+        resp = requests.get(f"{worker_url}?mode=state&t={CACHE_BUST}", timeout=8)
         if resp.status_code == 200:
             st = resp.json()
             if "core" in st and "YG1" in st["core"]:
@@ -124,6 +126,226 @@ def sync_state_from_worker(worker_url):
     except Exception:
         pass
     return default_state
+
+# =========================================================================
+# [V9.0 신규] 웹 관제탑용 바이오 임상(ClinicalTrials.gov) & 공시 호악재 판독 엔진
+# =========================================================================
+
+def classify_bio_catalyst(title):
+    pos_words = [
+        "기술이전", "기술수출", "라이선스", "단일판매", "공급계약", "마일스톤",
+        "임상승인", "승인", "완전관해", "초록", "ASH", "특허", "학회", "병용",
+        "FDA", "식약처", "데이터", "유효성", "희귀의약품", "패스트트랙", "계약체결"
+    ]
+    neg_words = [
+        "유상증자", "전환사채", "신주인수권", "임상중단", "임상보류", "보류",
+        "기재정정", "계약해지", "해지", "반려", "부작용", "독성", "사망", "불성실공시"
+    ]
+    for w in neg_words:
+        if w in title:
+            return {
+                "grade": "NEG",
+                "badge_cls": "bio-neg",
+                "badge_txt": "🔴 악재/희석주의",
+                "action": "추매 금지 · 공시 세부조건 확인 필수"
+            }
+    for w in pos_words:
+        if w in title:
+            return {
+                "grade": "POS",
+                "badge_cls": "bio-pos",
+                "badge_txt": "🟢 호재/모멘텀",
+                "action": "거래량(1.8배↑) 동반 시 스윙금고 이식 검토"
+            }
+    return {
+        "grade": "NEU",
+        "badge_cls": "bio-neu",
+        "badge_txt": "🟡 일반공시/동향",
+        "action": "단순 참고 · 기존 보유 비중 유지"
+    }
+
+def fetch_clinical_trials_gov():
+    url = "https://clinicaltrials.gov/api/v2/studies?query.term=ORM-5029+OR+ORM-6151+OR+BMS-986497+OR+AbClon+OR+HLX22+OR+AT101&pageSize=5&sort=LastUpdatePostDate:desc"
+    results = []
+    try:
+        resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=8)
+        if resp.status_code == 200:
+            studies = resp.json().get("studies", [])
+            for st in studies:
+                p = st.get("protocolSection", {})
+                id_mod = p.get("identificationModule", {})
+                st_mod = p.get("statusModule", {})
+                sp_mod = p.get("sponsorCollaboratorsModule", {})
+
+                nct_id = id_mod.get("nctId", "NCT-UNKNOWN")
+                raw_title = id_mod.get("briefTitle", "Clinical Study")
+                title = (raw_title[:52] + "...") if len(raw_title) > 52 else raw_title
+                title = title.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                status = st_mod.get("overallStatus", "UNKNOWN")
+                last_update = st_mod.get("lastUpdatePostDateStruct", {}).get("date", "확인중")
+                sponsor = sp_mod.get("leadSponsor", {}).get("name", "")
+
+                full_txt = f"{raw_title} {sponsor}".upper()
+                drug_tag = "바이오 임상"
+                if "ORM-6151" in full_txt or "986497" in full_txt:
+                    drug_tag = "오름/BMS ORM-6151"
+                elif "ORM-5029" in full_txt or "ORUM" in full_txt:
+                    drug_tag = "오름 ORM-5029"
+                elif "HLX22" in full_txt or "AC101" in full_txt:
+                    drug_tag = "앱클론/헨리우스 HLX22"
+                elif "AT101" in full_txt or "ABCLON" in full_txt:
+                    drug_tag = "앱클론 AT101"
+
+                st_cls = "bio-neu"
+                st_icon = "🟡"
+                if status in ("RECRUITING", "COMPLETED"):
+                    st_cls = "bio-pos"
+                    st_icon = "🟢"
+                elif status in ("SUSPENDED", "TERMINATED", "WITHDRAWN"):
+                    st_cls = "bio-neg"
+                    st_icon = "🔴"
+
+                results.append({
+                    "nct_id": nct_id,
+                    "drug_tag": drug_tag,
+                    "title": title,
+                    "status": status,
+                    "st_cls": st_cls,
+                    "st_icon": st_icon,
+                    "last_update": last_update,
+                    "link": f"https://clinicaltrials.gov/study/{nct_id}"
+                })
+    except Exception:
+        pass
+    return results
+
+def fetch_bio_disclosures():
+    items = []
+    if DART_API_KEY and len(DART_API_KEY) > 10:
+        try:
+            d_url = f"https://opendart.fss.or.kr/api/list.json?crtfc_key={DART_API_KEY}&page_count=10"
+            r = requests.get(d_url, timeout=6)
+            if r.status_code == 200:
+                for row in r.json().get("list", []):
+                    corp = row.get("corp_name", "")
+                    if "오름테라퓨틱" in corp or "앱클론" in corp:
+                        rep_nm = row.get("report_nm", "")
+                        rcp_no = row.get("rcept_no", "")
+                        rcp_dt = row.get("rcept_dt", "")
+                        cls_info = classify_bio_catalyst(rep_nm)
+                        items.append({
+                            "corp": corp,
+                            "title": f"[DART공시] {rep_nm}",
+                            "time": rcp_dt,
+                            "link": f"https://dart.fss.or.kr/dsaf001/main.do?rcpNo={rcp_no}",
+                            **cls_info
+                        })
+        except Exception:
+            pass
+
+    queries = [
+        ("오름테라퓨틱", "오름테라퓨틱 (공시 OR 임상 OR 기술이전 OR 초록 OR ASH OR ORM OR 유상증자 OR 전환사채)"),
+        ("앱클론", "앱클론 (공시 OR 임상 OR 기술이전 OR 단일판매 OR AT101 OR AC101 OR HLX22 OR 특허)")
+    ]
+    now_kst = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9)))
+    for corp_name, q in queries:
+        try:
+            url = f"https://news.google.com/rss/search?q={urllib.parse.quote(q)}&hl=ko&gl=KR&ceid=KR:ko"
+            resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=6)
+            cnt = 0
+            for entry in feedparser.parse(resp.content).entries:
+                if not hasattr(entry, 'published'):
+                    continue
+                pub_kst = parsedate_to_datetime(entry.published).astimezone(datetime.timezone(datetime.timedelta(hours=9)))
+                if (now_kst - pub_kst).total_seconds() / 3600 > 168:
+                    continue
+                raw_t = entry.title.rsplit(' - ', 1)[0] if ' - ' in entry.title else entry.title
+                clean_t = raw_t.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+                cls_info = classify_bio_catalyst(clean_t)
+                items.append({
+                    "corp": corp_name,
+                    "title": clean_t,
+                    "time": pub_kst.strftime("%m/%d %H:%M"),
+                    "link": entry.link,
+                    **cls_info
+                })
+                cnt += 1
+                if cnt >= 2:
+                    break
+        except Exception:
+            pass
+    return items[:4]
+
+def build_bio_radar_section(swing_vault_krw, or1_m, ab_m, trials, disclosures):
+    vault_man = swing_vault_krw // 10000
+    or_buyable = int(max(0, swing_vault_krw) // or1_m["curr"]) if or1_m["curr"] > 0 else 0
+    ab_buyable = int(max(0, swing_vault_krw) // ab_m["curr"]) if ab_m["curr"] > 0 else 0
+
+    or_ready = (or1_m["score"] >= 3 or or1_m["vol_ratio"] >= 1.8)
+    ab_ready = (ab_m["score"] >= 3 or ab_m["vol_ratio"] >= 1.8)
+    or_verdict = "🔥 1차 캐터펄트 이식 적기!" if or_ready else "⏸ 대기 (3점↑ 또는 호재공시 대기)"
+    ab_verdict = "🔥 1차 캐터펄트 이식 적기!" if ab_ready else "⏸ 대기 (3점↑ 또는 호재공시 대기)"
+    or_v_cls = "pos" if or_ready else "sub"
+    ab_v_cls = "pos" if ab_ready else "sub"
+
+    trials_html = "".join([
+        f'<div class="bio-item">'
+        f'<div class="bio-hd"><span class="bio-drug">[{t["drug_tag"]}]</span>'
+        f'<span class="bio-tag {t["st_cls"]}">{t["st_icon"]} {t["status"]} ({t["last_update"]})</span></div>'
+        f'<a href="{t["link"]}" target="_blank"><b>{t["nct_id"]}</b> · {t["title"]}</a>'
+        f'</div>'
+        for t in trials
+    ]) or '<div class="sub">미국 임상 DB 조회 대기 중</div>'
+
+    disc_html = "".join([
+        f'<div class="bio-item">'
+        f'<div class="bio-hd"><span class="bio-tag {d["badge_cls"]}">{d["badge_txt"]} · {d["corp"]}</span>'
+        f'<span class="meta">{d["time"]}</span></div>'
+        f'<a href="{d["link"]}" target="_blank">{d["title"]}</a>'
+        f'<div class="bio-act">💡 AI 판독: {d["action"]}</div>'
+        f'</div>'
+        for d in disclosures
+    ]) or '<div class="sub">최근 7일 내 주요 바이오 공시·임상 변동 없음</div>'
+
+    return f"""
+        <div class="cata-box">
+            <div class="sig-hd">
+                <div><b>🚀 스윙금고 ➔ 바이오 캐터펄트 이식 신호등</b></div>
+                <div class="pos" id="bio-vault-amt">금고 {vault_man:+,}만 원</div>
+            </div>
+            <div class="sub" style="margin-bottom:8px;">
+                금고 수익 전액 이식 시: <b style="color:#c084fc;">오름 +<span id="bio-or-buyable">{or_buyable:,}</span>주</b> 또는 <b style="color:#4ade80;">앱클론 +<span id="bio-ab-buyable">{ab_buyable:,}</span>주</b> 무상 증식 가능
+            </div>
+            <div class="cata-grid">
+                <div class="cata-cell">
+                    <div class="sub">🧬 오름테라퓨틱 수급·타점</div>
+                    <div style="margin:3px 0;"><b id="bio-or-blocks">{or1_m['blocks']}</b> <span class="sub">({or1_m['score']}/4) | 거래량 <b id="bio-or-vol">{or1_m['vol_ratio']:.1f}배</b></span></div>
+                    <div class="{or_v_cls}" id="bio-or-verdict" style="font-size:0.72rem;">{or_verdict}</div>
+                </div>
+                <div class="cata-cell">
+                    <div class="sub">🧬 앱클론 수급·타점</div>
+                    <div style="margin:3px 0;"><b id="bio-ab-blocks">{ab_m['blocks']}</b> <span class="sub">({ab_m['score']}/4) | 거래량 <b id="bio-ab-vol">{ab_m['vol_ratio']:.1f}배</b></span></div>
+                    <div class="{ab_v_cls}" id="bio-ab-verdict" style="font-size:0.72rem;">{ab_verdict}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bio-sub-hd">
+            <span>🔬 미국 국립보건원(ClinicalTrials.gov) 실시간 추적</span>
+            <span class="sub" id="bio-ct-sync">LIVE API 연동</span>
+        </div>
+        <div id="bio-trials-list">
+            {trials_html}
+        </div>
+
+        <div class="bio-sub-hd" style="margin-top:12px;">
+            <span>📡 DART 공시 · 학회(ASH) 호악재 AI 자동 판독</span>
+            <span class="sub">최근 7일 기준</span>
+        </div>
+        <div id="bio-disc-list">
+            {disc_html}
+        </div>
+    """
 
 def ensure_korean_fonts():
     reg_path = "NanumGothic-Regular.ttf"
@@ -351,11 +573,11 @@ def get_quad_verified_metrics(tickers, rsi_cut=35.0, disp_cut=-9.0, is_core_cash
             is_buy_alert = False
             if c1_oversold and score == 4:
                 sig, short_st = f"🔥 4중검증 완벽타점 ({score}/4)", "진바닥(4/4)"
-                cash = "잔여 시드 적극 투입 검토" if is_core_cash_target else "진바닥 강세 전환 (분할 추매)"
+                cash = "잔여 시드 적극 투입 검토" if is_core_cash_target else "진바닥 강세 전환 (캐터펄트 이식)"
                 is_buy_alert = True
             elif c1_oversold and score == 3 and (c3_momentum or c4_volume):
                 sig, short_st = f"✅ 1차 검증타점 ({score}/4)", "타점진입(3/4)"
-                cash = "신규 트랑셰 분할 투입" if is_core_cash_target else "단기 반등 타점 (소액 스윙)"
+                cash = "신규 트랑셰 분할 투입" if is_core_cash_target else "단기 반등 타점 (스윙금고 이식)"
                 is_buy_alert = True
             elif c1_oversold and score <= 2:
                 sig, short_st, cash = f"⚠️ 하락칼날 주의 ({score}/4)", f"칼날주의({score}/4)", "추가매수 대기 (반등 미확인)"
@@ -541,7 +763,7 @@ def generate_dashboard_png(out_path, now_str, krw_p, total_eval_krw, total_pnl_k
     img = Image.new("RGB", (W, H), "#070b14")
     draw = ImageDraw.Draw(img)
 
-    draw.text((28, 20), "마스터 비주얼 관제탑 V8.0 (무코드 장부)", font=f_title, fill="#38bdf8")
+    draw.text((28, 20), "마스터 비주얼 관제탑 V9.0 (무코드·바이오레이더)", font=f_title, fill="#38bdf8")
     sync_txt = f"동기화: {now_str} | 환율 ₩{krw_p:,.1f}"
     draw.text((W - 28, 26), sync_txt, font=f_sub, fill="#94a3b8", anchor="ra")
 
@@ -803,6 +1025,11 @@ def main():
     est_tax_krw = int(round(taxable_krw * 0.22))
     saved_tax_krw = max(0, 2019266 - est_tax_krw)
 
+    # 바이오 0초 레이더 데이터 수집 (미국 ClinicalTrials.gov + DART/학회 공시)
+    bio_trials = fetch_clinical_trials_gov()
+    bio_disclosures = fetch_bio_disclosures()
+    bio_radar_html = build_bio_radar_section(swing_vault_krw, or1, ab, bio_trials, bio_disclosures)
+
     stock_cost_krw = ram_cost_krw + kq["cost_krw"] + yg["cost_krw"] + or1["cost_krw"] + or2["cost_krw"] + ab["cost_krw"] + live_tr_cost
     stock_eval_krw = ram_eval_krw + kq["eval_krw"] + yg["eval_krw"] + or1["eval_krw"] + or2["eval_krw"] + ab["eval_krw"] + live_tr_eval
     total_pnl_krw = stock_eval_krw - stock_cost_krw
@@ -883,7 +1110,7 @@ def main():
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <title>마스터 관제탑 V8.0 No-Code</title>
+    <title>마스터 관제탑 V9.0 Bio-Radar</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script id="v8-state-backup" type="application/json">{state_json_str}</script>
     <style>
@@ -946,6 +1173,18 @@ def main():
         .pill-off {{ background: #0f172a; color: #64748b; border: 1px solid #1e293b; }}
         .sig-ft {{ display: flex; justify-content: space-between; align-items: center; padding-top: 6px; border-top: 1px solid #26334d; font-size: 0.78rem; }}
         .pos {{ color: #4ade80; font-weight: bold; }} .neg {{ color: #f87171; font-weight: bold; }} .warn {{ color: #fbbf24; font-weight: bold; }}
+        .cata-box {{ background: linear-gradient(145deg, #1b1630, #0f172a); border: 1px solid #c084fc; border-left: 4px solid #c084fc; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 0.80rem; }}
+        .cata-grid {{ display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; background: #090d16; padding: 8px; border-radius: 6px; text-align: center; }}
+        .cata-cell {{ border: 1px solid #1e293b; border-radius: 6px; padding: 6px; }}
+        .bio-sub-hd {{ display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; font-weight: bold; color: #e2e8f0; margin-bottom: 6px; }}
+        .bio-item {{ background: #161f33; border: 1px solid #26334d; padding: 8px 10px; border-radius: 8px; margin-bottom: 7px; font-size: 0.78rem; }}
+        .bio-hd {{ display: flex; justify-content: space-between; align-items: center; font-size: 0.70rem; margin-bottom: 4px; }}
+        .bio-drug {{ color: #c084fc; font-weight: bold; }}
+        .bio-tag {{ padding: 2px 6px; border-radius: 4px; font-size: 0.66rem; font-weight: bold; }}
+        .bio-pos {{ background: rgba(74, 222, 128, 0.18); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.5); }}
+        .bio-neg {{ background: rgba(248, 113, 113, 0.18); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.5); }}
+        .bio-neu {{ background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.4); }}
+        .bio-act {{ font-size: 0.70rem; color: #fbbf24; margin-top: 4px; }}
         .n-item {{ background: #161f33; padding: 8px 10px; border-radius: 8px; margin-bottom: 8px; font-size: 0.80rem; }}
         .n-hd {{ display: flex; justify-content: space-between; font-size: 0.70rem; margin-bottom: 4px; }} .tag {{ color: #38bdf8; font-weight: bold; }} .meta {{ color: #94a3b8; }}
         a {{ color: #f1f5f9; text-decoration: none; }}
@@ -953,7 +1192,7 @@ def main():
 </head>
 <body>
     <div class="top-hd">
-        <div class="top-title">🛡️ 마스터 관제탑 V8.0 (No-Code)</div>
+        <div class="top-title">🛡️ 마스터 관제탑 V9.0 (Bio-Radar)</div>
         <a href="dashboard_card.png" target="_blank" style="font-size:0.72rem;color:#2dd4bf;border:1px solid #2dd4bf;padding:3px 8px;border-radius:5px;">🖼️ 요약이미지 보기</a>
     </div>
 
@@ -1010,6 +1249,11 @@ def main():
     <div class="card">
         <h2>🎯 5대 종목 20일 추세 &amp; 4중 검증 스위치</h2>
         {sig_cards_html}
+    </div>
+
+    <div class="card">
+        <h2>🧬 바이오 0초 레이더 (미국 임상 DB &amp; 공시·캐터펄트)</h2>
+        {bio_radar_html}
     </div>
 
     <div class="card">
@@ -1086,7 +1330,50 @@ def main():
             setEl("sig-cash-" + keyId, "➔ " + m.cash);
         }}
 
+        async function fetchLiveClinicalTrials() {{
+            try {{
+                const url = "https://clinicaltrials.gov/api/v2/studies?query.term=ORM-5029+OR+ORM-6151+OR+BMS-986497+OR+AbClon+OR+HLX22+OR+AT101&pageSize=5&sort=LastUpdatePostDate:desc";
+                const res = await fetch(url);
+                if (!res.ok) return;
+                const data = await res.json();
+                const studies = data.studies || [];
+                if (!studies.length) return;
+
+                const htmlRows = studies.map(st => {{
+                    const p = st.protocolSection || {{}};
+                    const idMod = p.identificationModule || {{}};
+                    const stMod = p.statusModule || {{}};
+                    const spMod = p.sponsorCollaboratorsModule || {{}};
+                    const nctId = idMod.nctId || "NCT";
+                    const rawTitle = idMod.briefTitle || "Clinical Study";
+                    const title = rawTitle.length > 52 ? rawTitle.slice(0, 52) + "..." : rawTitle;
+                    const status = stMod.overallStatus || "UNKNOWN";
+                    const lastUpd = (stMod.lastUpdatePostDateStruct && stMod.lastUpdatePostDateStruct.date) ? stMod.lastUpdatePostDateStruct.date : "확인중";
+                    const sponsor = (spMod.leadSponsor && spMod.leadSponsor.name) ? spMod.leadSponsor.name : "";
+                    const fullTxt = (rawTitle + " " + sponsor).toUpperCase();
+
+                    let drugTag = "바이오 임상";
+                    if (fullTxt.includes("ORM-6151") || fullTxt.includes("986497")) drugTag = "오름/BMS ORM-6151";
+                    else if (fullTxt.includes("ORM-5029") || fullTxt.includes("ORUM")) drugTag = "오름 ORM-5029";
+                    else if (fullTxt.includes("HLX22") || fullTxt.includes("AC101")) drugTag = "앱클론/헨리우스 HLX22";
+                    else if (fullTxt.includes("AT101") || fullTxt.includes("ABCLON")) drugTag = "앱클론 AT101";
+
+                    let stCls = "bio-neu", stIcon = "🟡";
+                    if (status === "RECRUITING" || status === "COMPLETED") {{ stCls = "bio-pos"; stIcon = "🟢"; }}
+                    else if (status === "SUSPENDED" || status === "TERMINATED" || status === "WITHDRAWN") {{ stCls = "bio-neg"; stIcon = "🔴"; }}
+
+                    return `<div class="bio-item"><div class="bio-hd"><span class="bio-drug">[${{drugTag}}]</span><span class="bio-tag ${{stCls}}">${{stIcon}} ${{status}} (${{lastUpd}})</span></div><a href="https://clinicaltrials.gov/study/${{nctId}}" target="_blank"><b>${{nctId}}</b> · ${{title}}</a></div>`;
+                }}).join("");
+
+                const box = document.getElementById("bio-trials-list");
+                if (box) box.innerHTML = htmlRows;
+                const syncEl = document.getElementById("bio-ct-sync");
+                if (syncEl) syncEl.textContent = "🟢 미국 임상 DB 실시간 동기화됨";
+            }} catch (e) {{}}
+        }}
+
         async function fetchLiveDashboard() {{
+            fetchLiveClinicalTrials();
             if (!WORKER_API_URL) return;
             const btn = document.getElementById("btn-live-refresh");
             const badge = document.getElementById("live-status-badge");
@@ -1154,6 +1441,30 @@ def main():
                 updateSigCardDOM("or1", s.or1, `<span class="sub">₩${{Math.round(s.or1.price).toLocaleString()}} (${{(s.or1.pct>=0?'+':'') + s.or1.pct.toFixed(2)}}%)</span>`, `<span class="${{s.or1.ret>=0?'pos':'neg'}}">${{s.or1.ret.toFixed(1)}}%</span>`);
                 updateSigCardDOM("ab", s.ab, `<span class="sub">₩${{Math.round(s.ab.price).toLocaleString()}} (${{(s.ab.pct>=0?'+':'') + s.ab.pct.toFixed(2)}}%)</span>`, `<span class="${{s.ab.ret>=0?'pos':'neg'}}">${{s.ab.ret.toFixed(1)}}%</span>`);
 
+                // 바이오 캐터펄트 이식 신호등 실시간 갱신
+                const vaultKrw = Math.max(0, d.kpi.swingVaultKrw || 0);
+                const setBioTxt = (id, t) => {{ const e = document.getElementById(id); if (e) e.textContent = t; }};
+                setBioTxt("bio-vault-amt", "금고 " + fmtMan(d.kpi.swingVaultKrw) + " 원");
+                setBioTxt("bio-or-buyable", s.or1.price > 0 ? Math.floor(vaultKrw / s.or1.price).toLocaleString() : "0");
+                setBioTxt("bio-ab-buyable", s.ab.price > 0 ? Math.floor(vaultKrw / s.ab.price).toLocaleString() : "0");
+                setBioTxt("bio-or-blocks", s.or1.blocks);
+                setBioTxt("bio-or-vol", s.or1.volRatio.toFixed(1) + "배");
+                setBioTxt("bio-ab-blocks", s.ab.blocks);
+                setBioTxt("bio-ab-vol", s.ab.volRatio.toFixed(1) + "배");
+
+                const orReady = (s.or1.score >= 3 || s.or1.volRatio >= 1.8);
+                const abReady = (s.ab.score >= 3 || s.ab.volRatio >= 1.8);
+                const orVEl = document.getElementById("bio-or-verdict");
+                const abVEl = document.getElementById("bio-ab-verdict");
+                if (orVEl) {{
+                    orVEl.textContent = orReady ? "🔥 1차 캐터펄트 이식 적기!" : "⏸ 대기 (3점↑ 또는 호재공시 대기)";
+                    orVEl.className = orReady ? "pos" : "sub";
+                }}
+                if (abVEl) {{
+                    abVEl.textContent = abReady ? "🔥 1차 캐터펄트 이식 적기!" : "⏸ 대기 (3점↑ 또는 호재공시 대기)";
+                    abVEl.className = abReady ? "pos" : "sub";
+                }}
+
                 document.getElementById("hold-ram-qty").textContent = s.ram.totalQty.toLocaleString();
                 document.getElementById("hold-ram-avg").textContent = s.ram.totalAvg.toFixed(4);
                 document.getElementById("hold-ram-sess").textContent = s.ram.session;
@@ -1169,7 +1480,7 @@ def main():
                 ];
                 pfChart.update();
 
-                if (badge) badge.textContent = "🟢 무코드 장부 & LIVE 동기화 완료";
+                if (badge) badge.textContent = "🟢 무코드 장부 & 바이오레이더 LIVE";
             }} catch (e) {{
                 if (badge) badge.textContent = "⚪ 스냅샷 표시 중";
             }} finally {{
@@ -1223,7 +1534,7 @@ def main():
     if TOKEN and CHAT_ID and (is_scheduled_slot or is_manual_run or any_buy_alert):
         header_prefix = "🚨 <b>[긴급 타점/스탑 시그널 포착!]</b>\n" if (any_buy_alert and not is_scheduled_slot and not is_manual_run) else ""
         caption_msg = (
-            f"{header_prefix}🛡️ <b>[V8.0 무코드 장부 인포그래픽 브리핑]</b>\n"
+            f"{header_prefix}🛡️ <b>[V9.0 마스터 관제탑 인포그래픽 브리핑]</b>\n"
             f"⏰ {now_str} | 총자산: <b>{total_eval_krw//10000:,}만</b> (현금 {rem_cash_eval//10000:,}만 | 금고 {swing_vault_krw//10000:+,}만)\n"
             f"🧾 예상양도세: <b>{est_tax_krw//10000:,}만 원</b> (절세 +{saved_tax_krw//10000:,}만)\n"
             f"⚡ 반도체 풍향계: {semi_tg_str}\n\n"
@@ -1234,7 +1545,7 @@ def main():
 
         inline_kb = {
             "inline_keyboard": [
-                [{"text": "📊 V8.0 무코드 LIVE 웹 관제탑 열기", "url": DASHBOARD_URL}]
+                [{"text": "📊 V9.0 마스터 웹 관제탑 (바이오레이더 포함)", "url": DASHBOARD_URL}]
             ]
         }
 
