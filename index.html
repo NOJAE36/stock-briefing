@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <title>마스터 관제탑 V8.0 No-Code</title>
+    <title>마스터 관제탑 V9.0 Bio-Radar</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script id="v8-state-backup" type="application/json">{"version": "8.0", "updatedAt": "2026-11-15 KST", "cashKrw": 5173000, "swingVaultKrw": 0, "tax": {"realizedGainKrw": 11678483, "harvestedLossKrw": 0, "cetxSold": false}, "core": {"RAM": {"qty": 5854, "avgUsd": 10.0779}, "KODEX_LEV": {"qty": 3354, "avgKrw": 6152}, "YG1": {"qty": 656, "avgKrw": 12910}, "ORUM1": {"qty": 1097, "avgKrw": 107113}, "ORUM2": {"qty": 256, "avgKrw": 96650}, "ABCLON": {"qty": 256, "avgKrw": 52735}}, "tranches": {"RAM": {"mode": "LIVE", "name": "RAM 스윙 트랑셰", "symbol": "RAM", "currency": "USD", "entryDate": "2026-11-12", "entryPrice": 5.97, "qty": 606, "targetPct": 15, "trailPct": -7, "peakPrice": 5.97}, "KODEX_LEV": {"mode": "SIM", "name": "코스닥레버 스윙 트랑셰", "symbol": "233740.KS", "currency": "KRW", "entryDate": "2026-11-16", "entryPrice": 4050, "qty": 765, "targetPct": 12, "trailPct": -6, "peakPrice": 4050}}, "history": ["11/12: RAM 1차 606주($5.97) 매수 반영 완료"]}</script>
+    <script id="v8-state-backup" type="application/json">{"version": "9.0", "updatedAt": "2026-11-15 18:06 KST", "cashKrw": 5173000, "swingVaultKrw": 0, "tax": {"realizedGainKrw": 11678483, "harvestedLossKrw": 0, "cetxSold": false}, "core": {"RAM": {"qty": 5854, "avgUsd": 10.0779}, "KODEX_LEV": {"qty": 3354, "avgKrw": 6152}, "YG1": {"qty": 656, "avgKrw": 12910}, "ORUM1": {"qty": 1097, "avgKrw": 107113}, "ORUM2": {"qty": 256, "avgKrw": 96650}, "ABCLON": {"qty": 256, "avgKrw": 52735}}, "tranches": {"RAM": {"mode": "LIVE", "name": "RAM 스윙 트랑셰", "symbol": "RAM", "currency": "USD", "entryDate": "2026-11-12", "entryPrice": 5.97, "qty": 606, "targetPct": 15, "trailPct": -7, "peakPrice": 5.97}, "KODEX_LEV": {"mode": "SIM", "name": "코스닥레버 스윙 트랑셰", "symbol": "233740.KS", "currency": "KRW", "entryDate": "2026-11-16", "entryPrice": 4050, "qty": 765, "targetPct": 12, "trailPct": -6, "peakPrice": 4050}}, "history": ["11/12: RAM 1차 606주($5.97) 매수 반영 완료"], "sniperLog": {}, "bioSeenIds": {}, "chatId": "921943759"}</script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #070b14; color: #f8fafc; margin: 0; padding: 12px; max-width: 600px; margin: auto; }
         .top-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
@@ -66,6 +66,18 @@
         .pill-off { background: #0f172a; color: #64748b; border: 1px solid #1e293b; }
         .sig-ft { display: flex; justify-content: space-between; align-items: center; padding-top: 6px; border-top: 1px solid #26334d; font-size: 0.78rem; }
         .pos { color: #4ade80; font-weight: bold; } .neg { color: #f87171; font-weight: bold; } .warn { color: #fbbf24; font-weight: bold; }
+        .cata-box { background: linear-gradient(145deg, #1b1630, #0f172a); border: 1px solid #c084fc; border-left: 4px solid #c084fc; padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 0.80rem; }
+        .cata-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; background: #090d16; padding: 8px; border-radius: 6px; text-align: center; }
+        .cata-cell { border: 1px solid #1e293b; border-radius: 6px; padding: 6px; }
+        .bio-sub-hd { display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; font-weight: bold; color: #e2e8f0; margin-bottom: 6px; }
+        .bio-item { background: #161f33; border: 1px solid #26334d; padding: 8px 10px; border-radius: 8px; margin-bottom: 7px; font-size: 0.78rem; }
+        .bio-hd { display: flex; justify-content: space-between; align-items: center; font-size: 0.70rem; margin-bottom: 4px; }
+        .bio-drug { color: #c084fc; font-weight: bold; }
+        .bio-tag { padding: 2px 6px; border-radius: 4px; font-size: 0.66rem; font-weight: bold; }
+        .bio-pos { background: rgba(74, 222, 128, 0.18); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.5); }
+        .bio-neg { background: rgba(248, 113, 113, 0.18); color: #f87171; border: 1px solid rgba(248, 113, 113, 0.5); }
+        .bio-neu { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.4); }
+        .bio-act { font-size: 0.70rem; color: #fbbf24; margin-top: 4px; }
         .n-item { background: #161f33; padding: 8px 10px; border-radius: 8px; margin-bottom: 8px; font-size: 0.80rem; }
         .n-hd { display: flex; justify-content: space-between; font-size: 0.70rem; margin-bottom: 4px; } .tag { color: #38bdf8; font-weight: bold; } .meta { color: #94a3b8; }
         a { color: #f1f5f9; text-decoration: none; }
@@ -73,12 +85,12 @@
 </head>
 <body>
     <div class="top-hd">
-        <div class="top-title">🛡️ 마스터 관제탑 V8.0 (No-Code)</div>
+        <div class="top-title">🛡️ 마스터 관제탑 V9.0 (Bio-Radar)</div>
         <a href="dashboard_card.png" target="_blank" style="font-size:0.72rem;color:#2dd4bf;border:1px solid #2dd4bf;padding:3px 8px;border-radius:5px;">🖼️ 요약이미지 보기</a>
     </div>
 
     <div class="live-bar">
-        <div class="top-sync" id="top-sync-text">스냅샷: 2026-11-15 17:39 KST (₩1,336.2)</div>
+        <div class="top-sync" id="top-sync-text">스냅샷: 2026-11-15 18:06 KST (₩1,336.2)</div>
         <button class="btn-refresh" id="btn-live-refresh" onclick="fetchLiveDashboard()">🔄 실시간 시세 새로고침</button>
     </div>
 
@@ -199,7 +211,7 @@
 
     <div class="card">
         <h2>📅 핵심 일정 D-Day 트래커</h2>
-        <div class="dday-row"><span class="dday-tag dday-urgent">D-3</span><span class="dday-cat">[AI·DRAM]</span><span class="dday-title">엔비디아(NVDA) FY27 3Q 실적발표 (HBM 수요 풍향계) <span class="sub">(11-18)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-25</span><span class="dday-cat">[매크로]</span><span class="dday-title">미국 12월 FOMC 금리결정 및 점도표 발표 <span class="sub">(12-10)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-27</span><span class="dday-cat">[바이오]</span><span class="dday-title">미국 혈액암학회(ASH 2026) 개막 (오름·앱클론 모멘텀) <span class="sub">(12-12)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-32</span><span class="dday-cat">[DRAM]</span><span class="dday-title">마이크론(MU) FY27 1Q 실적발표 (RAM 직접 모멘텀) <span class="sub">(12-17)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-54</span><span class="dday-cat">[DRAM]</span><span class="dday-title">삼성전자 2026 4Q 잠정실적 발표 (메모리 마진 확인) <span class="sub">(01-08)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-57</span><span class="dday-cat">[바이오]</span><span class="dday-title">2027 JP모건 헬스케어 컨퍼런스 (글로벌 기술이전 시즌) <span class="sub">(01-11)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-68</span><span class="dday-cat">[DRAM]</span><span class="dday-title">SK하이닉스 2026 4Q 실적발표 (HBM3E·HBM4 가이던스) <span class="sub">(01-22)</span></span></div>
+        <div class="dday-row"><span class="dday-tag dday-urgent">D-3</span><span class="dday-cat">[AI·DRAM]</span><span class="dday-title">엔비디아(NVDA) FY27 3Q 실적발표 (HBM 수요 풍향계) <span class="sub">(11-18)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-22</span><span class="dday-cat">[바이오]</span><span class="dday-title">미국 혈액암학회(ASH) Late-Breaking 초록 공개 <span class="sub">(12-07)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-25</span><span class="dday-cat">[매크로]</span><span class="dday-title">미국 12월 FOMC 금리결정 및 점도표 발표 <span class="sub">(12-10)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-27</span><span class="dday-cat">[바이오]</span><span class="dday-title">미국 혈액암학회(ASH 2026) 개막 (오름·앱클론 모멘텀) <span class="sub">(12-12)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-32</span><span class="dday-cat">[DRAM]</span><span class="dday-title">마이크론(MU) FY27 1Q 실적발표 (RAM 직접 모멘텀) <span class="sub">(12-17)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-54</span><span class="dday-cat">[DRAM]</span><span class="dday-title">삼성전자 2026 4Q 잠정실적 발표 (메모리 마진 확인) <span class="sub">(01-08)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-57</span><span class="dday-cat">[바이오]</span><span class="dday-title">2027 JP모건 헬스케어 컨퍼런스 (글로벌 기술이전 시즌) <span class="sub">(01-11)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-68</span><span class="dday-cat">[DRAM]</span><span class="dday-title">SK하이닉스 2026 4Q 실적발표 (HBM3E·HBM4 가이던스) <span class="sub">(01-22)</span></span></div>
     </div>
 
     <div class="card">
@@ -338,6 +350,49 @@
     </div>
 
     <div class="card">
+        <h2>🧬 바이오 0초 레이더 (미국 임상 DB &amp; 공시·캐터펄트)</h2>
+        
+        <div class="cata-box">
+            <div class="sig-hd">
+                <div><b>🚀 스윙금고 ➔ 바이오 캐터펄트 이식 신호등</b></div>
+                <div class="pos" id="bio-vault-amt">금고 +0만 원</div>
+            </div>
+            <div class="sub" style="margin-bottom:8px;">
+                금고 수익 전액 이식 시: <b style="color:#c084fc;">오름 +<span id="bio-or-buyable">0</span>주</b> 또는 <b style="color:#4ade80;">앱클론 +<span id="bio-ab-buyable">0</span>주</b> 무상 증식 가능
+            </div>
+            <div class="cata-grid">
+                <div class="cata-cell">
+                    <div class="sub">🧬 오름테라퓨틱 수급·타점</div>
+                    <div style="margin:3px 0;"><b id="bio-or-blocks">🟩🟩⬜⬜</b> <span class="sub">(2/4) | 거래량 <b id="bio-or-vol">1.4배</b></span></div>
+                    <div class="sub" id="bio-or-verdict" style="font-size:0.72rem;">⏸ 대기 (3점↑ 또는 호재공시 대기)</div>
+                </div>
+                <div class="cata-cell">
+                    <div class="sub">🧬 앱클론 수급·타점</div>
+                    <div style="margin:3px 0;"><b id="bio-ab-blocks">🟩🟩⬜⬜</b> <span class="sub">(2/4) | 거래량 <b id="bio-ab-vol">1.1배</b></span></div>
+                    <div class="sub" id="bio-ab-verdict" style="font-size:0.72rem;">⏸ 대기 (3점↑ 또는 호재공시 대기)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bio-sub-hd">
+            <span>🔬 미국 국립보건원(ClinicalTrials.gov) 실시간 추적</span>
+            <span class="sub" id="bio-ct-sync">LIVE API 연동</span>
+        </div>
+        <div id="bio-trials-list">
+            <div class="bio-item"><div class="bio-hd"><span class="bio-drug">[오름/BMS ORM-6151]</span><span class="bio-tag bio-neg">🔴 TERMINATED (2026-10-01)</span></div><a href="https://clinicaltrials.gov/study/NCT06419634" target="_blank"><b>NCT06419634</b> · Study of BMS-986497 (ORM-6151) as a Monotherapy, in ...</a></div><div class="bio-item"><div class="bio-hd"><span class="bio-drug">[앱클론/헨리우스 HLX22]</span><span class="bio-tag bio-neu">🟡 NOT_YET_RECRUITING (2026-09-17)</span></div><a href="https://clinicaltrials.gov/study/NCT07824869" target="_blank"><b>NCT07824869</b> · A Phase II Study of HLX22 in Combination With Trastu...</a></div><div class="bio-item"><div class="bio-hd"><span class="bio-drug">[바이오 임상]</span><span class="bio-tag bio-neu">🟡 NOT_YET_RECRUITING (2026-06-25)</span></div><a href="https://clinicaltrials.gov/study/NCT07656766" target="_blank"><b>NCT07656766</b> · Sintilimab Plus Gossypol Acetate in Advanced Colorec...</a></div><div class="bio-item"><div class="bio-hd"><span class="bio-drug">[앱클론/헨리우스 HLX22]</span><span class="bio-tag bio-pos">🟢 RECRUITING (2026-03-20)</span></div><a href="https://clinicaltrials.gov/study/NCT07294508" target="_blank"><b>NCT07294508</b> · A Study to Evaluate HLX22 in Combination With HLX87 ...</a></div><div class="bio-item"><div class="bio-hd"><span class="bio-drug">[앱클론/헨리우스 HLX22]</span><span class="bio-tag bio-pos">🟢 RECRUITING (2026-02-27)</span></div><a href="https://clinicaltrials.gov/study/NCT06532006" target="_blank"><b>NCT06532006</b> · A Phase Ⅲ Clinical Study of HLX22 in Combination Wit...</a></div>
+        </div>
+
+        <div class="bio-sub-hd" style="margin-top:12px;">
+            <span>📡 DART 공시 · 학회(ASH) 호악재 AI 자동 판독</span>
+            <span class="sub">최근 7일 기준</span>
+        </div>
+        <div id="bio-disc-list">
+            <div class="bio-item"><div class="bio-hd"><span class="bio-tag bio-pos">🟢 호재/모멘텀 · 앱클론</span><span class="meta">11/13 07:25</span></div><a href="https://news.google.com/rss/articles/CBMickFVX3lxTE4yUlh4Y0NLOWhIRk5uREw2Sl9QbVFiLURQdkhqazB2ODN3MlpmTWR2eGlpSm9rVGhvWlJSaGdza3R6NThLTFJBakl4bTlOSUlVZDd6QVpkODU5NFkzelNYTEg5ajVrQ2RLU0RacWR2bXJEUQ?oc=5" target="_blank">앱클론 'HLX22' 빅팜 재기술이전 가능성…헨리우스 선택은</a><div class="bio-act">💡 AI 판독: 거래량(1.8배↑) 동반 시 스윙금고 이식 검토</div></div><div class="bio-item"><div class="bio-hd"><span class="bio-tag bio-pos">🟢 호재/모멘텀 · 앱클론</span><span class="meta">11/11 09:36</span></div><a href="https://news.google.com/rss/articles/CBMiV0FVX3lxTFBLNEZ2YlVmcTQxVm1Yb0dSblp4a0ZVX3lKTkNKQkpVSk5LMm5DQVBWZGI0UnRVSHZUWjF5YWtEWnNRVGN3MkRicFpQU0NVZnItaWFFZ1doSQ?oc=5" target="_blank">앱클론, 'CD19 CAR-T' 유럽특허 등록.."주요 8개국 완료"</a><div class="bio-act">💡 AI 판독: 거래량(1.8배↑) 동반 시 스윙금고 이식 검토</div></div>
+        </div>
+    
+    </div>
+
+    <div class="card">
         <h2>💼 보유 종목 상세 평가 &amp; 포트폴리오 비중</h2>
         <div style="width:210px;margin:0 auto 12px auto;"><canvas id="pfChart"></canvas></div>
         <div class="row"><span><b>RAM 합산</b> (<span id="hold-ram-qty">6,460</span>주 · 평단 $<span id="hold-ram-avg">9.6925</span>) <span class="badge" id="hold-ram-sess">애프터</span><br><span class="sub" id="hold-ram-sub">현재 $5.73</span></span><span class="neg" id="hold-ram-val" style="text-align:right;">-40.89% (-3,422만)<br>$37,011 (4,945만)</span></div>
@@ -411,7 +466,50 @@
             setEl("sig-cash-" + keyId, "➔ " + m.cash);
         }
 
+        async function fetchLiveClinicalTrials() {
+            try {
+                const url = "https://clinicaltrials.gov/api/v2/studies?query.term=ORM-5029+OR+ORM-6151+OR+BMS-986497+OR+AbClon+OR+HLX22+OR+AT101&pageSize=5&sort=LastUpdatePostDate:desc";
+                const res = await fetch(url);
+                if (!res.ok) return;
+                const data = await res.json();
+                const studies = data.studies || [];
+                if (!studies.length) return;
+
+                const htmlRows = studies.map(st => {
+                    const p = st.protocolSection || {};
+                    const idMod = p.identificationModule || {};
+                    const stMod = p.statusModule || {};
+                    const spMod = p.sponsorCollaboratorsModule || {};
+                    const nctId = idMod.nctId || "NCT";
+                    const rawTitle = idMod.briefTitle || "Clinical Study";
+                    const title = rawTitle.length > 52 ? rawTitle.slice(0, 52) + "..." : rawTitle;
+                    const status = stMod.overallStatus || "UNKNOWN";
+                    const lastUpd = (stMod.lastUpdatePostDateStruct && stMod.lastUpdatePostDateStruct.date) ? stMod.lastUpdatePostDateStruct.date : "확인중";
+                    const sponsor = (spMod.leadSponsor && spMod.leadSponsor.name) ? spMod.leadSponsor.name : "";
+                    const fullTxt = (rawTitle + " " + sponsor).toUpperCase();
+
+                    let drugTag = "바이오 임상";
+                    if (fullTxt.includes("ORM-6151") || fullTxt.includes("986497")) drugTag = "오름/BMS ORM-6151";
+                    else if (fullTxt.includes("ORM-5029") || fullTxt.includes("ORUM")) drugTag = "오름 ORM-5029";
+                    else if (fullTxt.includes("HLX22") || fullTxt.includes("AC101")) drugTag = "앱클론/헨리우스 HLX22";
+                    else if (fullTxt.includes("AT101") || fullTxt.includes("ABCLON")) drugTag = "앱클론 AT101";
+
+                    let stCls = "bio-neu", stIcon = "🟡";
+                    if (status === "RECRUITING" || status === "COMPLETED") { stCls = "bio-pos"; stIcon = "🟢"; }
+                    else if (status === "SUSPENDED" || status === "TERMINATED" || status === "WITHDRAWN") { stCls = "bio-neg"; stIcon = "🔴"; }
+
+                    return `<div class="bio-item"><div class="bio-hd"><span class="bio-drug">[${drugTag}]</span><span class="bio-tag ${stCls}">${stIcon} ${status} (${lastUpd})</span></div><a href="https://clinicaltrials.gov/study/${nctId}" target="_blank"><b>${nctId}</b> · ${title}</a></div>`;
+                }).join("");
+
+                const box = document.getElementById("bio-trials-list");
+                if (box) box.innerHTML = htmlRows;
+                const syncEl = document.getElementById("bio-ct-sync");
+                if (syncEl) syncEl.textContent = "🟢 미국 임상 DB 실시간 동기화됨";
+            } catch (e) {}
+        }
+
         async function fetchLiveDashboard() {
+            fetchLiveClinicalTrials();
             if (!WORKER_API_URL) return;
             const btn = document.getElementById("btn-live-refresh");
             const badge = document.getElementById("live-status-badge");
@@ -479,6 +577,30 @@
                 updateSigCardDOM("or1", s.or1, `<span class="sub">₩${Math.round(s.or1.price).toLocaleString()} (${(s.or1.pct>=0?'+':'') + s.or1.pct.toFixed(2)}%)</span>`, `<span class="${s.or1.ret>=0?'pos':'neg'}">${s.or1.ret.toFixed(1)}%</span>`);
                 updateSigCardDOM("ab", s.ab, `<span class="sub">₩${Math.round(s.ab.price).toLocaleString()} (${(s.ab.pct>=0?'+':'') + s.ab.pct.toFixed(2)}%)</span>`, `<span class="${s.ab.ret>=0?'pos':'neg'}">${s.ab.ret.toFixed(1)}%</span>`);
 
+                // 바이오 캐터펄트 이식 신호등 실시간 갱신
+                const vaultKrw = Math.max(0, d.kpi.swingVaultKrw || 0);
+                const setBioTxt = (id, t) => { const e = document.getElementById(id); if (e) e.textContent = t; };
+                setBioTxt("bio-vault-amt", "금고 " + fmtMan(d.kpi.swingVaultKrw) + " 원");
+                setBioTxt("bio-or-buyable", s.or1.price > 0 ? Math.floor(vaultKrw / s.or1.price).toLocaleString() : "0");
+                setBioTxt("bio-ab-buyable", s.ab.price > 0 ? Math.floor(vaultKrw / s.ab.price).toLocaleString() : "0");
+                setBioTxt("bio-or-blocks", s.or1.blocks);
+                setBioTxt("bio-or-vol", s.or1.volRatio.toFixed(1) + "배");
+                setBioTxt("bio-ab-blocks", s.ab.blocks);
+                setBioTxt("bio-ab-vol", s.ab.volRatio.toFixed(1) + "배");
+
+                const orReady = (s.or1.score >= 3 || s.or1.volRatio >= 1.8);
+                const abReady = (s.ab.score >= 3 || s.ab.volRatio >= 1.8);
+                const orVEl = document.getElementById("bio-or-verdict");
+                const abVEl = document.getElementById("bio-ab-verdict");
+                if (orVEl) {
+                    orVEl.textContent = orReady ? "🔥 1차 캐터펄트 이식 적기!" : "⏸ 대기 (3점↑ 또는 호재공시 대기)";
+                    orVEl.className = orReady ? "pos" : "sub";
+                }
+                if (abVEl) {
+                    abVEl.textContent = abReady ? "🔥 1차 캐터펄트 이식 적기!" : "⏸ 대기 (3점↑ 또는 호재공시 대기)";
+                    abVEl.className = abReady ? "pos" : "sub";
+                }
+
                 document.getElementById("hold-ram-qty").textContent = s.ram.totalQty.toLocaleString();
                 document.getElementById("hold-ram-avg").textContent = s.ram.totalAvg.toFixed(4);
                 document.getElementById("hold-ram-sess").textContent = s.ram.session;
@@ -494,7 +616,7 @@
                 ];
                 pfChart.update();
 
-                if (badge) badge.textContent = "🟢 무코드 장부 & LIVE 동기화 완료";
+                if (badge) badge.textContent = "🟢 무코드 장부 & 바이오레이더 LIVE";
             } catch (e) {
                 if (badge) badge.textContent = "⚪ 스냅샷 표시 중";
             } finally {
