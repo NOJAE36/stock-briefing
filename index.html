@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <title>마스터 관제탑 V7.0 LIVE</title>
+    <title>마스터 관제탑 V8.0 No-Code</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script id="v8-state-backup" type="application/json">{"version": "8.0", "updatedAt": "2026-11-15 KST", "cashKrw": 5173000, "swingVaultKrw": 0, "tax": {"realizedGainKrw": 11678483, "harvestedLossKrw": 0, "cetxSold": false}, "core": {"RAM": {"qty": 5854, "avgUsd": 10.0779}, "KODEX_LEV": {"qty": 3354, "avgKrw": 6152}, "YG1": {"qty": 656, "avgKrw": 12910}, "ORUM1": {"qty": 1097, "avgKrw": 107113}, "ORUM2": {"qty": 256, "avgKrw": 96650}, "ABCLON": {"qty": 256, "avgKrw": 52735}}, "tranches": {"RAM": {"mode": "LIVE", "name": "RAM 스윙 트랑셰", "symbol": "RAM", "currency": "USD", "entryDate": "2026-11-12", "entryPrice": 5.97, "qty": 606, "targetPct": 15, "trailPct": -7, "peakPrice": 5.97}, "KODEX_LEV": {"mode": "SIM", "name": "코스닥레버 스윙 트랑셰", "symbol": "233740.KS", "currency": "KRW", "entryDate": "2026-11-16", "entryPrice": 4050, "qty": 765, "targetPct": 12, "trailPct": -6, "peakPrice": 4050}}, "history": ["11/12: RAM 1차 606주($5.97) 매수 반영 완료"]}</script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #070b14; color: #f8fafc; margin: 0; padding: 12px; max-width: 600px; margin: auto; }
         .top-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
@@ -12,7 +13,6 @@
         .live-bar { display: flex; justify-content: space-between; align-items: center; background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 6px 10px; margin-bottom: 10px; }
         .top-sync { font-size: 0.72rem; color: #94a3b8; }
         .btn-refresh { background: #0284c7; color: #fff; border: none; border-radius: 6px; padding: 5px 10px; font-size: 0.72rem; font-weight: bold; cursor: pointer; }
-        .btn-refresh:active { opacity: 0.8; }
         .kpi-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 10px; }
         .kpi-box { background: linear-gradient(145deg, #131c31, #0f172a); border: 1px solid #1e293b; border-radius: 10px; padding: 10px; text-align: center; }
         .kpi-lbl { font-size: 0.71rem; color: #94a3b8; margin-bottom: 3px; }
@@ -56,7 +56,6 @@
         .range-Labels-sub { display: flex; justify-content: space-between; font-size: 0.68rem; color: #94a3b8; }
         .tr-ft { display: flex; justify-content: space-between; align-items: center; padding-top: 4px; border-top: 1px solid #26334d; font-size: 0.78rem; }
         .sig-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-        .my-ret { font-size: 0.75rem; font-weight: bold; }
         .bar-bg { width: 100%; height: 5px; background: #0f172a; border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
         .bar-fill { height: 100%; border-radius: 3px; }
         .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: #0f172a; padding: 6px; border-radius: 6px; margin-bottom: 8px; text-align: center; font-size: 0.75rem; }
@@ -74,35 +73,35 @@
 </head>
 <body>
     <div class="top-hd">
-        <div class="top-title">🛡️ 마스터 비주얼 관제탑 V7.0</div>
+        <div class="top-title">🛡️ 마스터 관제탑 V8.0 (No-Code)</div>
         <a href="dashboard_card.png" target="_blank" style="font-size:0.72rem;color:#2dd4bf;border:1px solid #2dd4bf;padding:3px 8px;border-radius:5px;">🖼️ 요약이미지 보기</a>
     </div>
 
     <div class="live-bar">
-        <div class="top-sync" id="top-sync-text">스냅샷: 2026-11-15 11:38 KST (₩1,336.2)</div>
+        <div class="top-sync" id="top-sync-text">스냅샷: 2026-11-15 17:39 KST (₩1,336.2)</div>
         <button class="btn-refresh" id="btn-live-refresh" onclick="fetchLiveDashboard()">🔄 실시간 시세 새로고침</button>
     </div>
 
     <div class="kpi-grid">
         <div class="kpi-box">
             <div class="kpi-lbl">총 평가자산 (1차목표 15,131만)</div>
-            <div class="kpi-val" id="kpi-total-eval" style="color:#38bdf8;">10,170만 원</div>
-            <div class="kpi-sub" id="kpi-total-sub">1차 전환선까지 4,961만 원</div>
+            <div class="kpi-val" id="kpi-total-eval" style="color:#38bdf8;">10,171만 원</div>
+            <div class="kpi-sub" id="kpi-total-sub">1차 전환선까지 4,960만 원</div>
         </div>
         <div class="kpi-box">
             <div class="kpi-lbl">원화 환산 총 평가손익</div>
             <div class="kpi-val neg" id="kpi-total-pnl">-17,198만 원</div>
-            <div class="kpi-sub" id="kpi-total-pnl-sub">-171,973,932원</div>
+            <div class="kpi-sub" id="kpi-total-pnl-sub">주식 수익률 -64.05%</div>
         </div>
         <div class="kpi-box">
-            <div class="kpi-lbl">보유 주식 합산 수익률</div>
-            <div class="kpi-val neg" id="kpi-stock-ret">-64.05%</div>
-            <div class="kpi-sub" id="kpi-asset-ret">현금포함 총자산 -62.84%</div>
+            <div class="kpi-lbl">가용 현금 / 스윙 복리금고</div>
+            <div class="kpi-val" id="kpi-cash-vault"><span style="color:#4ade80;">517만</span> / <span style="color:#38bdf8;">+0만</span></div>
+            <div class="kpi-sub">텔레그램 /매수·/매도 자동반영</div>
         </div>
         <div class="kpi-box">
-            <div class="kpi-lbl">주식 평가액 / 잔여 현금</div>
-            <div class="kpi-val" id="kpi-stock-cash">9,653만 / <span style="color:#4ade80;">516만</span></div>
-            <div class="kpi-sub">RAM 1차(606주) 실전 감시 중</div>
+            <div class="kpi-lbl">2026 예상 해외주식 양도세</div>
+            <div class="kpi-val" id="kpi-tax-val" style="color:#fbbf24;">201만 원</div>
+            <div class="kpi-sub" id="kpi-tax-sub">절세 감면액 +0만 원</div>
         </div>
     </div>
 
@@ -144,11 +143,11 @@
     </div>
 
     <div class="card">
-        <h2>🛡️ 신규 스윙 트랑셰 위치 트래커 (스탑 ➔ 목표)</h2>
+        <h2>🛡️ 신규 스윙 트랑셰 위치 트래커 (무코드 장부 연동)</h2>
         
                 <div class="tr-box" id="live-tranche-card">
                     <div class="sig-hd">
-                        <div><b>RAM 엔비디아실적 1차</b> (606주) <span class="tr-badge tr-live">🟢 실전 LIVE</span></div>
+                        <div><b>RAM 스윙 트랑셰</b> (<span id="tr-live-qty">606</span>주) <span class="tr-badge tr-live">🟢 실전 LIVE</span></div>
                         <div class="neg" id="tr-live-ret" style="font-size:0.9rem;">-4.03%</div>
                     </div>
                     <div class="range-wrap">
@@ -173,7 +172,7 @@
                 </div>
                 <div class="tr-box" >
                     <div class="sig-hd">
-                        <div><b>코스닥레버리지 눌림 1차</b> (850주) <span class="tr-badge tr-sim">🧪 모의 프리뷰</span></div>
+                        <div><b>코스닥레버 스윙 트랑셰</b> (<span id="">765</span>주) <span class="tr-badge tr-sim">🧪 모의 프리뷰</span></div>
                         <div class="pos" id="" style="font-size:0.9rem;">+6.79%</div>
                     </div>
                     <div class="range-wrap">
@@ -192,9 +191,9 @@
                         </div>
                     </div>
                     <div class="tr-ft">
-                        <span>단독 손익: <b class="pos" id="">+233,750원 (+23만 원)</b> (원금 344만)</span>
+                        <span>단독 손익: <b class="pos" id="">+210,375원 (+21만 원)</b> (원금 309만)</span>
                     </div>
-                    <div class="sub" style="margin-top:4px;">💡 MTS 합산: 4,204주 · 평단 ₩5,727 | <span id="">진입가 ₩4,050 가정 시뮬레이션</span></div>
+                    <div class="sub" style="margin-top:4px;">💡 MTS 합산: 3,354주 · 평단 ₩6,152 | <span id="">진입가 ₩4,050 가정 시뮬레이션 (/매수 명령어로 실전 전환)</span></div>
                 </div>
     </div>
 
@@ -333,7 +332,7 @@
             </div>
             <div class="sig-ft">
                 <span class="" id="sig-txt-ab">⏸ 중립·관망 (2/4)</span>
-                <span class="warn" id="sig-cash-ab">➔ 1차 606주 감시 · 잔여현금 대기</span>
+                <span class="warn" id="sig-cash-ab">➔ 스윙 트랑셰 감시 · 현금 대기</span>
             </div>
         </div>
     </div>
@@ -341,15 +340,15 @@
     <div class="card">
         <h2>💼 보유 종목 상세 평가 &amp; 포트폴리오 비중</h2>
         <div style="width:210px;margin:0 auto 12px auto;"><canvas id="pfChart"></canvas></div>
-        <div class="row"><span><b>RAM 합산</b> (6,460주 · 평단 $9.6926) <span class="badge" id="hold-ram-sess">애프터</span><br><span class="sub" id="hold-ram-sub">기존 5,854주($10.08) + 신규 606주($5.97) | 현재 $5.73</span></span><span class="neg" id="hold-ram-val" style="text-align:right;">-40.89% (-3,422만)<br>$37,011 (4,945만)</span></div>
-        <div class="row"><span><b>코스닥150레버리지</b> (3,354주 · 평단 6,152원)<br><span class="sub" id="hold-kq-sub">현재 ₩4,325 (+0.58%)</span></span><span class="neg" id="hold-kq-val" style="text-align:right;">-29.70% (-613만)<br>14,506,050원</span></div>
-        <div class="row"><span><b>와이지-원</b> (656주 · 평단 12,910원)<br><span class="sub" id="hold-yg-sub">현재 ₩9,770 (-0.51%)</span></span><span class="neg" id="hold-yg-val" style="text-align:right;">-24.32% (-206만)<br>6,409,120원</span></div>
+        <div class="row"><span><b>RAM 합산</b> (<span id="hold-ram-qty">6,460</span>주 · 평단 $<span id="hold-ram-avg">9.6925</span>) <span class="badge" id="hold-ram-sess">애프터</span><br><span class="sub" id="hold-ram-sub">현재 $5.73</span></span><span class="neg" id="hold-ram-val" style="text-align:right;">-40.89% (-3,422만)<br>$37,011 (4,945만)</span></div>
+        <div class="row"><span><b>코스닥150레버리지</b> (<span id="hold-kq-qty">3,354</span>주)<br><span class="sub" id="hold-kq-sub">현재 ₩4,325 (+0.58%)</span></span><span class="neg" id="hold-kq-val" style="text-align:right;">-29.70% (-613만)<br>14,506,050원</span></div>
+        <div class="row"><span><b>와이지-원</b> (<span id="hold-yg-qty">656</span>주 · 평단 12,910원)<br><span class="sub" id="hold-yg-sub">현재 ₩9,770 (-0.51%)</span></span><span class="neg" id="hold-yg-val" style="text-align:right;">-24.32% (-206만)<br>6,409,120원</span></div>
         <div class="row"><span><b>오름테라퓨틱(계좌1)</b> (1,097주 · 평단 107,113원)<br><span class="sub" id="hold-or1-sub">현재 ₩15,000 (+1.15%)</span></span><span class="neg" id="hold-or1-val" style="text-align:right;">-86.00% (-10,105만)<br>16,455,000원</span></div>
         <div class="row"><span><b>오름테라퓨틱(계좌2)</b> (256주 · 평단 96,650원)<br><span class="sub" id="hold-or2-sub">현재 ₩15,000 (+1.15%)</span></span><span class="neg" id="hold-or2-val" style="text-align:right;">-84.48% (-2,091만)<br>3,840,000원</span></div>
         <div class="row"><span><b>앱클론</b> (256주 · 평단 52,735원)<br><span class="sub" id="hold-ab-sub">현재 ₩22,950 (+5.03%)</span></span><span class="neg" id="hold-ab-val" style="text-align:right;">-56.48% (-763만)<br>5,875,200원</span></div>
     </div>
 
-    <div class="card"><h2>📰 최근 48시간 최신 속보</h2><div class="n-item"><div class="n-hd"><span class="tag">[반도체]</span><span class="meta">11/15 07:39 | 핀포인트뉴스</span></div><a href="https://news.google.com/rss/articles/CBMid0FVX3lxTE1TRjlpVVJrWGRHSlNtd0JVSTREMHRQSVBNQVdsYThYYUxDckJtTzRtZ1FkY01fbGRHcFVNM1IxT0NvQVI4N2FnTHIzbHBsbmc0a1ZRNnhQdHJTSFhtaGJHRmJuQ2ZOZE9KTXltcXMzeEp1QTR6TDhv0gF3QVVfeXFMTVNGOWlVUmtYZEdKU213QlVJNEQwdFBJUE1BV2xhOFhhTENyQm1PNG1nUWRjTV9sZEdwVU0zUjFPQ29BUjg3YWdMcjNscGxuZzRrVlE2eFB0clNIWG1oYkdGYm5DZk5kT0pNeW1xczN4SnVBNHpMOG8?oc=5" target="_blank">엔비디아 실적이 국내 반도체주 좌우한다…HBM·AI 관련주 주목을</a></div><div class="n-item"><div class="n-hd"><span class="tag">[반도체]</span><span class="meta">11/13 15:20 | 뉴스핌</span></div><a href="https://news.google.com/rss/articles/CBMiXEFVX3lxTE40LVRjX3FHVDNWN1FtOWFSTUNPSG50U1RkSXBHeFl1bmFxT2t4YXhwVU0yRHdfTkFFYjBSVDFJS2hQelpKM0VCdGJjdnprWFRFakwwWnduZjMxU0Vk?oc=5" target="_blank">엔비디아 위기, 삼성·SK엔 기회…HBM 공급망 재편 촉각</a></div><div class="n-item"><div class="n-hd"><span class="tag">[매크로]</span><span class="meta">11/13 17:30 | 시사저널e</span></div><a href="https://news.google.com/rss/articles/CBMickFVX3lxTE1yMVc4VVFsRG5hWl9MVzBlREUtRWpzc0JTdG1qT0hGZGJGVGVMM0pQRmNoLTJQS0h4R2JZWkhpMERaei1ITWNhZHdKLWFqVDlLTDg2eXpyeEtNMFJoVEV4c1RvOVFnNU1qU1FpdnQyUWpCUQ?oc=5" target="_blank">[이슈픽5] 李 "코스닥 부실기업 퇴출"·한전 어닝쇼크···오늘의 경제 5선</a></div><div class="n-item"><div class="n-hd"><span class="tag">[바이오]</span><span class="meta">11/13 17:07 | 시사저널e</span></div><a href="https://news.google.com/rss/articles/CBMickFVX3lxTE1UMEtTaHFIVjBCUFZuQmtPdV9GVnYtMGZHQ194aDk1cldYUVIyeWNKZURCRTQzWW5Oclo1US01WUwxLW0wR2tWOUNROVQ4T084RHVMZDZLcUpNY1JjZVAyem05ZG5jN2hTdFN5di1uRlNkd9IBdkFVX3lxTE1aY3RLTmc0ejBmdHBqc3NpRnV6QWZmaG1IdXRfeWNfMmZoUEN0VVFVUElNQUdoZWlldWIwWUhxTHh1cHh3SGdBSWYyWHhzaEJWOU05RVU4YWc1LVJEMnlMekk1Z2lDX18ySnZjQl9EUkYtckpWWFE?oc=5" target="_blank">앱클론, CAR-T 공장 신설 대신 기존 시설 활용···투자 부담 줄일까</a></div></div>
+    <div class="card"><h2>📰 최근 48시간 최신 속보</h2><div class="n-item"><div class="n-hd"><span class="tag">[반도체]</span><span class="meta">11/15 07:39 | 핀포인트뉴스</span></div><a href="https://news.google.com/rss/articles/CBMid0FVX3lxTE1TRjlpVVJrWGRHSlNtd0JVSTREMHRQSVBNQVdsYThYYUxDckJtTzRtZ1FkY01fbGRHcFVNM1IxT0NvQVI4N2FnTHIzbHBsbmc0a1ZRNnhQdHJTSFhtaGJHRmJuQ2ZOZE9KTXltcXMzeEp1QTR6TDhv0gF3QVVfeXFMTVNGOWlVUmtYZEdKU213QlVJNEQwdFBJUE1BV2xhOFhhTENyQm1PNG1nUWRjTV9sZEdwVU0zUjFPQ29BUjg3YWdMcjNscGxuZzRrVlE2eFB0clNIWG1oYkdGYm5DZk5kT0pNeW1xczN4SnVBNHpMOG8?oc=5" target="_blank">엔비디아 실적이 국내 반도체주 좌우한다…HBM·AI 관련주 주목을</a></div><div class="n-item"><div class="n-hd"><span class="tag">[반도체]</span><span class="meta">11/14 08:21 | 톱스타뉴스</span></div><a href="https://news.google.com/rss/articles/CBMickFVX3lxTE1HLXI1VGlUTXEweEtscGVQbzJxdnBNNGQxSFpGTmpBRmpFWno2eFJoX1M4eGdqbDRCUlZGQjgtVDFjNzVVZUhudC1RcVhfeWJZbHVzOFhJMFFSTTBOSVBCczBmclZIZHFjUzhROEdmd0JqUQ?oc=5" target="_blank">젠슨 황 사임, AI 산업 '돈줄' 흔들리나…삼성전자·SK하이닉스 HBM 수요까지 번지는 우려</a></div></div>
 
     <script>
         const WORKER_API_URL = "https://stock-reply-bot.heondol4011.workers.dev/";
@@ -357,9 +356,9 @@
         const pfChart = new Chart(document.getElementById('pfChart'), {
             type: 'doughnut',
             data: {
-                labels: ['RAM(반도체 6,460주)', '바이오(오름·앱클론)', '코스닥150레버리지', '잔여현금', '와이지-원'],
+                labels: ['RAM(반도체)', '바이오(오름·앱클론)', '코스닥150레버리지', '잔여현금', '와이지-원'],
                 datasets: [{
-                    data: [4945, 2617, 1450, 516, 640],
+                    data: [4945, 2617, 1450, 517, 640],
                     backgroundColor: ['#38bdf8', '#c084fc', '#f87171', '#4ade80', '#fbbf24'],
                     borderWidth: 0
                 }]
@@ -417,7 +416,7 @@
             const btn = document.getElementById("btn-live-refresh");
             const badge = document.getElementById("live-status-badge");
             if (btn) btn.textContent = "⏳ 실시간 수신 중...";
-            if (badge) badge.textContent = "⏳ 실시간 시세 조회 중...";
+            if (badge) badge.textContent = "⏳ 실시간 장부·시세 동기화 중...";
 
             try {
                 const res = await fetch(WORKER_API_URL + "?mode=live&t=" + Date.now());
@@ -430,13 +429,11 @@
                 const pnlEl = document.getElementById("kpi-total-pnl");
                 pnlEl.textContent = fmtMan(d.kpi.totalPnlKrw) + " 원";
                 pnlEl.className = "kpi-val " + (d.kpi.totalPnlKrw >= 0 ? "pos" : "neg");
-                document.getElementById("kpi-total-pnl-sub").textContent = (d.kpi.totalPnlKrw >= 0 ? "+" : "") + d.kpi.totalPnlKrw.toLocaleString() + "원";
+                document.getElementById("kpi-total-pnl-sub").textContent = "보유주식 수익률 " + (d.kpi.stockRetPct >= 0 ? "+" : "") + d.kpi.stockRetPct.toFixed(2) + "%";
 
-                const sRetEl = document.getElementById("kpi-stock-ret");
-                sRetEl.textContent = (d.kpi.stockRetPct >= 0 ? "+" : "") + d.kpi.stockRetPct.toFixed(2) + "%";
-                sRetEl.className = "kpi-val " + (d.kpi.stockRetPct >= 0 ? "pos" : "neg");
-                document.getElementById("kpi-asset-ret").textContent = "현금포함 총자산 " + (d.kpi.totalAssetRetPct >= 0 ? "+" : "") + d.kpi.totalAssetRetPct.toFixed(2) + "%";
-                document.getElementById("kpi-stock-cash").innerHTML = Math.round(d.kpi.stockEvalKrw / 10000).toLocaleString() + "만 / <span style='color:#4ade80;'>" + Math.round(d.kpi.remCashKrw / 10000).toLocaleString() + "만</span>";
+                document.getElementById("kpi-cash-vault").innerHTML = `<span style="color:#4ade80;">${Math.round(d.kpi.remCashKrw / 10000).toLocaleString()}만</span> / <span style="color:#38bdf8;">${fmtMan(d.kpi.swingVaultKrw)}</span>`;
+                document.getElementById("kpi-tax-val").textContent = Math.round(d.taxInfo.estTax / 10000).toLocaleString() + "만 원";
+                document.getElementById("kpi-tax-sub").textContent = "절세 감면액 +" + Math.round(d.taxInfo.savedTax / 10000).toLocaleString() + "만 원";
 
                 d.semiPeers.forEach((sp, idx) => {
                     const pEl = document.getElementById("semi-pct-" + idx);
@@ -450,46 +447,43 @@
 
                 const tr = d.tranche;
                 if (tr) {
+                    const qEl = document.getElementById("tr-live-qty");
+                    if (qEl) qEl.textContent = tr.qty.toLocaleString();
                     const trRet = document.getElementById("tr-live-ret");
                     if (trRet) {
                         trRet.textContent = (tr.retPct >= 0 ? "+" : "") + tr.retPct.toFixed(2) + "%";
                         trRet.className = tr.retPct >= 0 ? "pos" : "neg";
                     }
-                    document.getElementById("tr-live-stop").textContent = "🛡️스탑 $" + tr.stopP.toFixed(2);
-                    document.getElementById("tr-live-curr").textContent = "현재 $" + tr.currP.toFixed(2);
-                    document.getElementById("tr-live-target").textContent = "🎯목표 $" + tr.targetP.toFixed(2);
-                    document.getElementById("tr-live-fill").style.width = tr.posPct + "%";
-                    document.getElementById("tr-live-dot").style.left = tr.posPct + "%";
-                    document.getElementById("tr-live-dist-stop").textContent = "스탑까지 -" + tr.distStop.toFixed(1) + "% 여유";
-                    document.getElementById("tr-live-dist-target").textContent = "익절까지 +" + tr.distTarget.toFixed(1) + "% 남음";
+                    const setTxt = (id, t) => { const e = document.getElementById(id); if (e) e.textContent = t; };
+                    setTxt("tr-live-stop", "🛡️스탑 $" + tr.stopP.toFixed(2));
+                    setTxt("tr-live-curr", "현재 $" + tr.currP.toFixed(2));
+                    setTxt("tr-live-target", "🎯목표 $" + tr.targetP.toFixed(2));
+                    const fEl = document.getElementById("tr-live-fill");
+                    const dEl = document.getElementById("tr-live-dot");
+                    if (fEl) fEl.style.width = tr.posPct + "%";
+                    if (dEl) dEl.style.left = tr.posPct + "%";
+                    setTxt("tr-live-dist-stop", "스탑까지 -" + tr.distStop.toFixed(1) + "% 여유");
+                    setTxt("tr-live-dist-target", "익절까지 +" + tr.distTarget.toFixed(1) + "% 남음");
                     const trPnl = document.getElementById("tr-live-pnl");
                     if (trPnl) {
                         trPnl.textContent = (tr.pnlUsd >= 0 ? "+" : "") + tr.pnlUsd.toFixed(1) + "달러 (" + fmtMan(tr.pnlKrw) + " 원)";
                         trPnl.className = tr.retPct >= 0 ? "pos" : "neg";
                     }
-                    document.getElementById("tr-live-status").textContent = tr.status;
+                    setTxt("tr-live-status", tr.status);
                 }
 
                 const s = d.stocks;
-                updateSigCardDOM("ram", s.ram, `<span class="badge">${s.ram.session}</span> <span class="sub">$${s.ram.price.toFixed(2)} (${(s.ram.pct>=0?'+':'') + s.ram.pct.toFixed(2)}%)</span>`, `<span class="${s.ram.totalRet>=0?'pos':'neg'}">${(s.ram.totalRet>=0?'+':'') + s.ram.totalRet.toFixed(1)}% (평단 $9.69)</span>`);
+                updateSigCardDOM("ram", s.ram, `<span class="badge">${s.ram.session}</span> <span class="sub">$${s.ram.price.toFixed(2)} (${(s.ram.pct>=0?'+':'') + s.ram.pct.toFixed(2)}%)</span>`, `<span class="${s.ram.totalRet>=0?'pos':'neg'}">${(s.ram.totalRet>=0?'+':'') + s.ram.totalRet.toFixed(1)}% (평단 $${s.ram.totalAvg.toFixed(2)})</span>`);
                 updateSigCardDOM("kq", s.kq, `<span class="sub">₩${Math.round(s.kq.price).toLocaleString()} (${(s.kq.pct>=0?'+':'') + s.kq.pct.toFixed(2)}%)</span>`, `<span class="${s.kq.ret>=0?'pos':'neg'}">${s.kq.ret.toFixed(1)}%</span>`);
                 updateSigCardDOM("yg", s.yg, `<span class="sub">₩${Math.round(s.yg.price).toLocaleString()} (${(s.yg.pct>=0?'+':'') + s.yg.pct.toFixed(2)}%)</span>`, `<span class="${s.yg.ret>=0?'pos':'neg'}">${s.yg.ret.toFixed(1)}%</span>`);
                 updateSigCardDOM("or1", s.or1, `<span class="sub">₩${Math.round(s.or1.price).toLocaleString()} (${(s.or1.pct>=0?'+':'') + s.or1.pct.toFixed(2)}%)</span>`, `<span class="${s.or1.ret>=0?'pos':'neg'}">${s.or1.ret.toFixed(1)}%</span>`);
                 updateSigCardDOM("ab", s.ab, `<span class="sub">₩${Math.round(s.ab.price).toLocaleString()} (${(s.ab.pct>=0?'+':'') + s.ab.pct.toFixed(2)}%)</span>`, `<span class="${s.ab.ret>=0?'pos':'neg'}">${s.ab.ret.toFixed(1)}%</span>`);
 
+                document.getElementById("hold-ram-qty").textContent = s.ram.totalQty.toLocaleString();
+                document.getElementById("hold-ram-avg").textContent = s.ram.totalAvg.toFixed(4);
                 document.getElementById("hold-ram-sess").textContent = s.ram.session;
-                document.getElementById("hold-ram-sub").textContent = `기존 5,854주($10.08) + 신규 606주($5.97) | 현재 $${s.ram.price.toFixed(2)}`;
+                document.getElementById("hold-ram-sub").textContent = `현재 $${s.ram.price.toFixed(2)}`;
                 document.getElementById("hold-ram-val").innerHTML = `${(s.ram.totalRet>=0?'+':'') + s.ram.totalRet.toFixed(2)}% (${fmtMan(s.ram.pnlKrw)})<br>$${Math.round(s.ram.evalUsd).toLocaleString()} (${Math.round(s.ram.evalKrw/10000).toLocaleString()}만)`;
-
-                const updKrHold = (k, obj) => {
-                    document.getElementById("hold-" + k + "-sub").textContent = `현재 ₩${Math.round(obj.price).toLocaleString()} (${(obj.pct>=0?'+':'') + obj.pct.toFixed(2)}%)`;
-                    document.getElementById("hold-" + k + "-val").innerHTML = `${obj.ret.toFixed(2)}% (${fmtMan(obj.pnl)})<br>${obj.evalAmt.toLocaleString()}원`;
-                };
-                updKrHold("kq", s.kq);
-                updKrHold("yg", s.yg);
-                updKrHold("or1", s.or1);
-                updKrHold("or2", s.or2);
-                updKrHold("ab", s.ab);
 
                 pfChart.data.datasets[0].data = [
                     Math.round(d.kpi.ramEvalKrw / 10000),
@@ -500,7 +494,7 @@
                 ];
                 pfChart.update();
 
-                if (badge) badge.textContent = "🟢 실시간 LIVE 동기화 완료";
+                if (badge) badge.textContent = "🟢 무코드 장부 & LIVE 동기화 완료";
             } catch (e) {
                 if (badge) badge.textContent = "⚪ 스냅샷 표시 중";
             } finally {
@@ -508,7 +502,6 @@
             }
         }
 
-        // 웹 관제탑을 열자마자 자동으로 실시간 시세 패치 실행 (60초마다 자동 재갱신)
         window.addEventListener("DOMContentLoaded", () => {
             fetchLiveDashboard();
             setInterval(fetchLiveDashboard, 60000);
