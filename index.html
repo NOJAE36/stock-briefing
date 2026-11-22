@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>마스터 관제탑 V9.5 Smart-Money</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script id="v8-state-backup" type="application/json">{"version": "9.5", "updatedAt": "2026-11-19 18:15 KST", "cashKrw": 5173000, "swingVaultKrw": 0, "tax": {"realizedGainKrw": 11678483, "harvestedLossKrw": 0, "cetxSold": false}, "core": {"RAM": {"qty": 5854, "avgUsd": 10.0779}, "KODEX_LEV": {"qty": 3354, "avgKrw": 6152}, "YG1": {"qty": 656, "avgKrw": 12910}, "ORUM1": {"qty": 1097, "avgKrw": 107113}, "ORUM2": {"qty": 256, "avgKrw": 96650}, "ABCLON": {"qty": 256, "avgKrw": 52735}}, "tranches": {"RAM": {"mode": "LIVE", "name": "RAM 스윙 트랑셰", "symbol": "RAM", "currency": "USD", "entryDate": "2026-11-12", "entryPrice": 5.97, "qty": 606, "targetPct": 15, "trailPct": -7, "peakPrice": 5.97}, "KODEX_LEV": {"mode": "SIM", "name": "코스닥레버 스윙 트랑셰", "symbol": "233740.KS", "currency": "KRW", "entryDate": "2026-11-16", "entryPrice": 4050, "qty": 765, "targetPct": 12, "trailPct": -6, "peakPrice": 4050}}, "history": ["11/12: RAM 1차 606주($5.97) 매수 반영 완료"], "sniperLog": {}, "bioSeenIds": {}, "chatId": "921943759"}</script>
+    <script id="v8-state-backup" type="application/json">{"version": "9.5", "updatedAt": "2026-11-23 05:20 KST", "cashKrw": 5173000, "swingVaultKrw": 0, "tax": {"realizedGainKrw": 11678483, "harvestedLossKrw": 0, "cetxSold": false}, "core": {"RAM": {"qty": 5854, "avgUsd": 10.0779}, "KODEX_LEV": {"qty": 3354, "avgKrw": 6152}, "YG1": {"qty": 656, "avgKrw": 12910}, "ORUM1": {"qty": 1097, "avgKrw": 107113}, "ORUM2": {"qty": 256, "avgKrw": 96650}, "ABCLON": {"qty": 256, "avgKrw": 52735}}, "tranches": {"RAM": {"mode": "LIVE", "name": "RAM 스윙 트랑셰", "symbol": "RAM", "currency": "USD", "entryDate": "2026-11-12", "entryPrice": 5.97, "qty": 606, "targetPct": 15, "trailPct": -7, "peakPrice": 5.97}, "KODEX_LEV": {"mode": "SIM", "name": "코스닥레버 스윙 트랑셰", "symbol": "233740.KS", "currency": "KRW", "entryDate": "2026-11-16", "entryPrice": 4050, "qty": 765, "targetPct": 12, "trailPct": -6, "peakPrice": 4050}}, "history": ["11/12: RAM 1차 606주($5.97) 매수 반영 완료"], "sniperLog": {}, "bioSeenIds": {}, "chatId": "921943759"}</script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #070b14; color: #f8fafc; margin: 0; padding: 12px; max-width: 600px; margin: auto; }
         .top-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
@@ -91,20 +91,20 @@
     </div>
 
     <div class="live-bar">
-        <div class="top-sync" id="top-sync-text">스냅샷: 2026-11-22 12:09 KST (₩1,334.8)</div>
+        <div class="top-sync" id="top-sync-text">스냅샷: 2026-11-23 05:20 KST (₩1,346.0)</div>
         <button class="btn-refresh" id="btn-live-refresh" onclick="fetchLiveDashboard()">🔄 실시간 시세·수급 새로고침</button>
     </div>
 
     <div class="kpi-grid">
         <div class="kpi-box">
             <div class="kpi-lbl">총 평가자산 (1차목표 15,131만)</div>
-            <div class="kpi-val" id="kpi-total-eval" style="color:#38bdf8;">7,912만 원</div>
-            <div class="kpi-sub" id="kpi-total-sub">1차 전환선까지 7,219만 원</div>
+            <div class="kpi-val" id="kpi-total-eval" style="color:#38bdf8;">7,939만 원</div>
+            <div class="kpi-sub" id="kpi-total-sub">1차 전환선까지 7,192만 원</div>
         </div>
         <div class="kpi-box">
             <div class="kpi-lbl">원화 환산 총 평가손익</div>
-            <div class="kpi-val neg" id="kpi-total-pnl">-19,448만 원</div>
-            <div class="kpi-sub" id="kpi-total-pnl-sub">주식 수익률 -72.45%</div>
+            <div class="kpi-val neg" id="kpi-total-pnl">-19,491만 원</div>
+            <div class="kpi-sub" id="kpi-total-pnl-sub">주식 수익률 -72.42%</div>
         </div>
         <div class="kpi-box">
             <div class="kpi-lbl">가용 현금 / 스윙 복리금고</div>
@@ -179,7 +179,7 @@
                         </div>
                     </div>
                     <div class="tr-ft">
-                        <span>단독 손익: <b class="neg" id="tr-live-pnl">-1,345.3달러 (-180만 원)</b> (원금 482만)</span>
+                        <span>단독 손익: <b class="neg" id="tr-live-pnl">-1,345.3달러 (-182만 원)</b> (원금 486만)</span>
                     </div>
                     <div class="sub" style="margin-top:4px;">💡 MTS 합산: 6,460주 · 평단 $9.6925 | <span id="tr-live-status">🚨 트레일링 스탑 도달! ($5.94 이하 매도)</span></div>
                     <div class="sub" style="margin-top:3px;color:#cbd5e1;">📉 <span id="tr-decay-ram">10일 누적: ETF -26.9% vs MU×2 (-23.0%) ➔ 괴리 -3.89%p [⚠️ 음의복리 잠식주의 (단기스윙 권장)]</span></div>
@@ -214,7 +214,7 @@
 
     <div class="card">
         <h2>📅 핵심 일정 D-Day 트래커</h2>
-        <div class="dday-row"><span class="dday-tag dday-normal">D-15</span><span class="dday-cat">[바이오]</span><span class="dday-title">미국 혈액암학회(ASH) Late-Breaking 초록 공개 <span class="sub">(12-07)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-18</span><span class="dday-cat">[매크로]</span><span class="dday-title">미국 12월 FOMC 금리결정 및 점도표 발표 <span class="sub">(12-10)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-20</span><span class="dday-cat">[바이오]</span><span class="dday-title">미국 혈액암학회(ASH 2026) 개막 (오름·앱클론 모멘텀) <span class="sub">(12-12)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-25</span><span class="dday-cat">[DRAM]</span><span class="dday-title">마이크론(MU) FY27 1Q 실적발표 (RAM 직접 모멘텀) <span class="sub">(12-17)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-47</span><span class="dday-cat">[DRAM]</span><span class="dday-title">삼성전자 2026 4Q 잠정실적 발표 (메모리 마진 확인) <span class="sub">(01-08)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-50</span><span class="dday-cat">[바이오]</span><span class="dday-title">2027 JP모건 헬스케어 컨퍼런스 (글로벌 기술이전 시즌) <span class="sub">(01-11)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-61</span><span class="dday-cat">[DRAM]</span><span class="dday-title">SK하이닉스 2026 4Q 실적발표 (HBM3E·HBM4 가이던스) <span class="sub">(01-22)</span></span></div>
+        <div class="dday-row"><span class="dday-tag dday-normal">D-14</span><span class="dday-cat">[바이오]</span><span class="dday-title">미국 혈액암학회(ASH) Late-Breaking 초록 공개 <span class="sub">(12-07)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-17</span><span class="dday-cat">[매크로]</span><span class="dday-title">미국 12월 FOMC 금리결정 및 점도표 발표 <span class="sub">(12-10)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-19</span><span class="dday-cat">[바이오]</span><span class="dday-title">미국 혈액암학회(ASH 2026) 개막 (오름·앱클론 모멘텀) <span class="sub">(12-12)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-24</span><span class="dday-cat">[DRAM]</span><span class="dday-title">마이크론(MU) FY27 1Q 실적발표 (RAM 직접 모멘텀) <span class="sub">(12-17)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-46</span><span class="dday-cat">[DRAM]</span><span class="dday-title">삼성전자 2026 4Q 잠정실적 발표 (메모리 마진 확인) <span class="sub">(01-08)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-49</span><span class="dday-cat">[바이오]</span><span class="dday-title">2027 JP모건 헬스케어 컨퍼런스 (글로벌 기술이전 시즌) <span class="sub">(01-11)</span></span></div><div class="dday-row"><span class="dday-tag dday-normal">D-60</span><span class="dday-cat">[DRAM]</span><span class="dday-title">SK하이닉스 2026 4Q 실적발표 (HBM3E·HBM4 가이던스) <span class="sub">(01-22)</span></span></div>
     </div>
 
     <div class="card">
@@ -412,7 +412,7 @@
             <span class="sub">최근 7일 기준</span>
         </div>
         <div id="bio-disc-list">
-            <div class="bio-item"><div class="bio-hd"><span class="bio-tag bio-neu">🟡 일반공시/동향 · 앱클론</span><span class="meta">11/20 09:07</span></div><a href="https://news.google.com/rss/articles/CBMiV0FVX3lxTE5xczJqN2U4YVpfTk5GMU9lR3N5bzlWdXFSZ3BfQ2FVNG1MeHdZdGR5XzdKNGN5S19lOTlVaTMxelFSNThNTExhUTdsZVBfdUZuemlxUnlMYw?oc=5" target="_blank">앱클론, 'PSMAx4-1BB' 이중항체 "KDDF 과제선정"</a><div class="bio-act">💡 AI 판독: 단순 참고 · 기존 보유 비중 유지</div></div><div class="bio-item"><div class="bio-hd"><span class="bio-tag bio-neu">🟡 일반공시/동향 · 앱클론</span><span class="meta">11/19 09:24</span></div><a href="https://news.google.com/rss/articles/CBMickFVX3lxTE9oa3RLa3FLX2QtaEF0OFBGZnlhcU4xSmdyUEloT1RKcWhoSTJxbnlKT1FiRndjblI5TExHdm4yN0FfVzViVFhVTmVGNjN5cmdoLXZnMFNaTVZZMDJjenlVVjB4OUp3dTVvMFoxTDVaRnpldw?oc=5" target="_blank">앱클론 기술적용 ADC, 글로벌 1상 등록…엔허투와 직접 비교</a><div class="bio-act">💡 AI 판독: 단순 참고 · 기존 보유 비중 유지</div></div>
+            <div class="bio-item"><div class="bio-hd"><span class="bio-tag bio-neu">🟡 일반공시/동향 · 앱클론</span><span class="meta">11/20 09:07</span></div><a href="https://news.google.com/rss/articles/CBMiV0FVX3lxTE5xczJqN2U4YVpfTk5GMU9lR3N5bzlWdXFSZ3BfQ2FVNG1MeHdZdGR5XzdKNGN5S19lOTlVaTMxelFSNThNTExhUTdsZVBfdUZuemlxUnlMYw?oc=5" target="_blank">앱클론, 'PSMAx4-1BB' 이중항체 "KDDF 과제선정"</a><div class="bio-act">💡 AI 판독: 단순 참고 · 기존 보유 비중 유지</div></div><div class="bio-item"><div class="bio-hd"><span class="bio-tag bio-neu">🟡 일반공시/동향 · 앱클론</span><span class="meta">11/17 09:47</span></div><a href="https://news.google.com/rss/articles/CBMibEFVX3lxTE9nTFlfeHdRNVVNM0daRGFPalRyZTU3UEFzMFRSWVE2X3hSTVNlQlRIN0VsZ0V4RzVvSUkwcGQ1cUtiTmpYay1xSUlsS2dOTDZfdE9ucU9nSVhTRWphM0tKSVZWbVdXM2ktcXhhWNIBcEFVX3lxTFBKTFBnTm9nTzJIdG5vTHVWTURaSFFwSGVQbnVDdld0SkVHdkRSUzFlY05tUnBZM3RiQlZzSzZTUzdpLWU0a01kUFpmM0RsX2xCVXpma2RwemItY1R6eDdKYXpyYVppWGNYUGtDbDUtVWU?oc=5" target="_blank">앱클론, ‘AC101’ HER2 저발현 위장관암 2상 추가…글로벌 임상 10건 확대</a><div class="bio-act">💡 AI 판독: 단순 참고 · 기존 보유 비중 유지</div></div>
         </div>
     
     </div>
@@ -420,7 +420,7 @@
     <div class="card">
         <h2>💼 보유 종목 상세 평가 &amp; 포트폴리오 비중</h2>
         <div style="width:210px;margin:0 auto 12px auto;"><canvas id="pfChart"></canvas></div>
-        <div class="row"><span><b>RAM 합산</b> (<span id="hold-ram-qty">6,460</span>주 · 평단 $<span id="hold-ram-avg">9.6925</span>) <span class="badge" id="hold-ram-sess">🌙애프터</span><br><span class="sub" id="hold-ram-sub">현재 $3.75 | 모체 MU 기관자금(CMF): -0.17</span></span><span class="neg" id="hold-ram-val" style="text-align:right;">-61.31% (-5,125만)<br>$24,225 (3,233만)</span></div>
+        <div class="row"><span><b>RAM 합산</b> (<span id="hold-ram-qty">6,460</span>주 · 평단 $<span id="hold-ram-avg">9.6925</span>) <span class="badge" id="hold-ram-sess">🌙애프터</span><br><span class="sub" id="hold-ram-sub">현재 $3.75 | 모체 MU 기관자금(CMF): -0.17</span></span><span class="neg" id="hold-ram-val" style="text-align:right;">-61.31% (-5,168만)<br>$24,225 (3,260만)</span></div>
         <div class="row"><span><b>코스닥150레버리지</b> (<span id="hold-kq-qty">3,354</span>주)<br><span class="sub" id="hold-kq-sub">현재 ₩3,615 (-13.72%) | 외인 -118.4만주 · 기관 -2204.9만주 · 개인 +2307.1만주</span></span><span class="neg" id="hold-kq-val" style="text-align:right;">-41.24% (-851만)<br>12,124,710원</span></div>
         <div class="row"><span><b>와이지-원</b> (<span id="hold-yg-qty">656</span>주 · 평단 12,910원)<br><span class="sub" id="hold-yg-sub">현재 ₩8,850 (-7.33%) | 외인 -2.7만주 · 기관 -2.2만주 · 개인 +5.0만주</span></span><span class="neg" id="hold-yg-val" style="text-align:right;">-31.45% (-267만)<br>5,805,600원</span></div>
         <div class="row"><span><b>오름테라퓨틱(계좌1)</b> (1,097주 · 평단 107,113원)<br><span class="sub" id="hold-or1-sub">현재 ₩13,090 (-7.16%) | 외인 +2,378주 · 기관 -3,541주 · 개인 +666주</span></span><span class="neg" id="hold-or1-val" style="text-align:right;">-87.78% (-10,315만)<br>14,359,730원</span></div>
@@ -428,7 +428,7 @@
         <div class="row"><span><b>앱클론</b> (256주 · 평단 52,735원)<br><span class="sub" id="hold-ab-sub">현재 ₩23,350 (-4.11%) | 외인 -2,258주 · 기관 +1.1만주 · 개인 -8,816주</span></span><span class="neg" id="hold-ab-val" style="text-align:right;">-55.72% (-753만)<br>5,977,600원</span></div>
     </div>
 
-    <div class="card"><h2>📰 최근 48시간 최신 속보</h2><div class="n-item"><div class="n-hd"><span class="tag">[바이오]</span><span class="meta">11/20 19:36 | 메디컬투데이</span></div><a href="https://news.google.com/rss/articles/CBMibEFVX3lxTE1fMDlxS1lFRUdlS0pMU1BIZmdHY3dQOEtld2lqdWQ5QlozQUlCb2g4Y1Q3VTJRb08wS2lVWDdudVA1ellReXozclpZbFRPS3RRczk5WnB3RlpVQ3pRWWl1ZGNsN2hWdGJUQ0RGVg?oc=5" target="_blank">앱클론, 전립선암 이중항체 신약 개발 속도...국가과제 선정</a></div></div>
+    <div class="card"><h2>📰 최근 48시간 최신 속보</h2><div class="n-item">최근 48시간 내 속보 없음</div></div>
 
     <script>
         const WORKER_API_URL = "https://stock-reply-bot.heondol4011.workers.dev/";
@@ -438,7 +438,7 @@
             data: {
                 labels: ['RAM(반도체)', '바이오(오름·앱클론)', '코스닥150레버리지', '잔여현금', '와이지-원'],
                 datasets: [{
-                    data: [3233, 2368, 1212, 517, 580],
+                    data: [3260, 2368, 1212, 517, 580],
                     backgroundColor: ['#38bdf8', '#c084fc', '#f87171', '#4ade80', '#fbbf24'],
                     borderWidth: 0
                 }]
