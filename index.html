@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>마스터 관제탑 V9.5 Smart-Money</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script id="v8-state-backup" type="application/json">{"version": "9.5", "updatedAt": "2026-11-26 11:48 KST", "cashKrw": 5173000, "swingVaultKrw": 0, "tax": {"realizedGainKrw": 11678483, "harvestedLossKrw": 0, "cetxSold": false}, "core": {"RAM": {"qty": 5854, "avgUsd": 10.0779}, "KODEX_LEV": {"qty": 3354, "avgKrw": 6152}, "YG1": {"qty": 656, "avgKrw": 12910}, "ORUM1": {"qty": 1097, "avgKrw": 107113}, "ORUM2": {"qty": 256, "avgKrw": 96650}, "ABCLON": {"qty": 256, "avgKrw": 52735}}, "tranches": {"RAM": {"mode": "LIVE", "name": "RAM 스윙 트랑셰", "symbol": "RAM", "currency": "USD", "entryDate": "2026-11-12", "entryPrice": 5.97, "qty": 606, "targetPct": 15, "trailPct": -7, "peakPrice": 5.97}, "KODEX_LEV": {"mode": "SIM", "name": "코스닥레버 스윙 트랑셰", "symbol": "233740.KS", "currency": "KRW", "entryDate": "2026-11-16", "entryPrice": 4050, "qty": 765, "targetPct": 12, "trailPct": -6, "peakPrice": 4050}}, "history": ["11/12: RAM 1차 606주($5.97) 매수 반영 완료"], "sniperLog": {}, "bioSeenIds": {}, "chatId": "921943759"}</script>
+    <script id="v8-state-backup" type="application/json">{"version": "9.5", "updatedAt": "2026-11-25 00:49 KST", "cashKrw": 5173000, "swingVaultKrw": 0, "tax": {"realizedGainKrw": 11678483, "harvestedLossKrw": 0, "cetxSold": false}, "core": {"RAM": {"qty": 5854, "avgUsd": 10.0779}, "KODEX_LEV": {"qty": 3354, "avgKrw": 6152}, "YG1": {"qty": 656, "avgKrw": 12910}, "ORUM1": {"qty": 1097, "avgKrw": 107113}, "ORUM2": {"qty": 256, "avgKrw": 96650}, "ABCLON": {"qty": 256, "avgKrw": 52735}}, "tranches": {"RAM": {"mode": "LIVE", "name": "RAM 스윙 트랑셰", "symbol": "RAM", "currency": "USD", "entryDate": "2026-11-12", "entryPrice": 5.97, "qty": 606, "targetPct": 15, "trailPct": -7, "peakPrice": 5.97}, "KODEX_LEV": {"mode": "SIM", "name": "코스닥레버 스윙 트랑셰", "symbol": "233740.KS", "currency": "KRW", "entryDate": "2026-11-16", "entryPrice": 4050, "qty": 765, "targetPct": 12, "trailPct": -6, "peakPrice": 4050}}, "history": ["11/12: RAM 1차 606주($5.97) 매수 반영 완료"], "sniperLog": {}, "bioSeenIds": {}, "chatId": "921943759"}</script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #070b14; color: #f8fafc; margin: 0; padding: 12px; max-width: 600px; margin: auto; }
         .top-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
@@ -91,20 +91,20 @@
     </div>
 
     <div class="live-bar">
-        <div class="top-sync" id="top-sync-text">스냅샷: 2026-11-26 11:48 KST (₩1,340.0)</div>
+        <div class="top-sync" id="top-sync-text">스냅샷: 2026-11-26 21:20 KST (₩1,344.0)</div>
         <button class="btn-refresh" id="btn-live-refresh" onclick="fetchLiveDashboard()">🔄 실시간 시세·수급 새로고침</button>
     </div>
 
     <div class="kpi-grid">
         <div class="kpi-box">
             <div class="kpi-lbl">총 평가자산 (1차목표 15,131만)</div>
-            <div class="kpi-val" id="kpi-total-eval" style="color:#38bdf8;">8,080만 원</div>
-            <div class="kpi-sub" id="kpi-total-sub">1차 전환선까지 7,051만 원</div>
+            <div class="kpi-val" id="kpi-total-eval" style="color:#38bdf8;">8,021만 원</div>
+            <div class="kpi-sub" id="kpi-total-sub">1차 전환선까지 7,110만 원</div>
         </div>
         <div class="kpi-box">
             <div class="kpi-lbl">원화 환산 총 평가손익</div>
-            <div class="kpi-val neg" id="kpi-total-pnl">-19,312만 원</div>
-            <div class="kpi-sub" id="kpi-total-pnl-sub">주식 수익률 -71.86%</div>
+            <div class="kpi-val neg" id="kpi-total-pnl">-19,396만 원</div>
+            <div class="kpi-sub" id="kpi-total-pnl-sub">주식 수익률 -72.10%</div>
         </div>
         <div class="kpi-box">
             <div class="kpi-lbl">가용 현금 / 스윙 복리금고</div>
@@ -123,7 +123,7 @@
         <span id="live-status-badge" style="color:#4ade80;">● V9.5 LIVE 연동</span>
     </div>
     <div class="semi-grid">
-        <div class="semi-tile" id="semi-tile-0"><div class="semi-top"><span>엔비디아</span><span class="neg" id="semi-pct-0">-2.68%</span></div><div class="semi-val" id="semi-val-0">$151.22</div></div><div class="semi-tile" id="semi-tile-1"><div class="semi-top"><span>마이크론</span><span class="neg" id="semi-pct-1">-2.31%</span></div><div class="semi-val" id="semi-val-1">$615.26</div></div><div class="semi-tile" id="semi-tile-2"><div class="semi-top"><span>삼성전자</span><span class="pos" id="semi-pct-2">+1.35%</span></div><div class="semi-val" id="semi-val-2">₩173,000</div></div><div class="semi-tile" id="semi-tile-3"><div class="semi-top"><span>SK하이닉스</span><span class="pos" id="semi-pct-3">+3.79%</span></div><div class="semi-val" id="semi-val-3">₩1,069,000</div></div>
+        <div class="semi-tile" id="semi-tile-0"><div class="semi-top"><span>엔비디아</span><span class="neg" id="semi-pct-0">-2.68%</span></div><div class="semi-val" id="semi-val-0">$151.22</div></div><div class="semi-tile" id="semi-tile-1"><div class="semi-top"><span>마이크론</span><span class="neg" id="semi-pct-1">-2.31%</span></div><div class="semi-val" id="semi-val-1">$615.26</div></div><div class="semi-tile" id="semi-tile-2"><div class="semi-top"><span>삼성전자</span><span class="pos" id="semi-pct-2">+0.35%</span></div><div class="semi-val" id="semi-val-2">₩171,300</div></div><div class="semi-tile" id="semi-tile-3"><div class="semi-top"><span>SK하이닉스</span><span class="pos" id="semi-pct-3">+2.23%</span></div><div class="semi-val" id="semi-val-3">₩1,053,000</div></div>
     </div>
 
     <div class="q-grid">
@@ -135,13 +135,13 @@
         </div>
         <div class="q-tile q-wait" id="q-tile-kq">
             <div class="q-name">코스닥레버</div>
-            <div class="q-score" id="q-score-kq">🟩⬜⬜⬜</div>
-            <div class="q-st" id="q-st-kq">관망중(1/4)</div>
+            <div class="q-score" id="q-score-kq">🟩🟩⬜⬜</div>
+            <div class="q-st" id="q-st-kq">관망중(2/4)</div>
         </div>
         <div class="q-tile q-buy" id="q-tile-yg">
             <div class="q-name">와이지-원</div>
-            <div class="q-score" id="q-score-yg">🟩🟩🟩🟩</div>
-            <div class="q-st" id="q-st-yg">진바닥(4/4)</div>
+            <div class="q-score" id="q-score-yg">🟩🟩🟩⬜</div>
+            <div class="q-st" id="q-st-yg">타점진입(3/4)</div>
         </div>
         <div class="q-tile q-buy" id="q-tile-or1">
             <div class="q-name">오름테라</div>
@@ -179,7 +179,7 @@
                         </div>
                     </div>
                     <div class="tr-ft">
-                        <span>단독 손익: <b class="neg" id="tr-live-pnl">-1,266.5달러 (-170만 원)</b> (원금 484만)</span>
+                        <span>단독 손익: <b class="neg" id="tr-live-pnl">-1,266.5달러 (-171만 원)</b> (원금 486만)</span>
                     </div>
                     <div class="sub" style="margin-top:4px;">💡 MTS 합산: 6,460주 · 평단 $9.6925 | <span id="tr-live-status">🚨 트레일링 스탑 도달! ($5.94 이하 매도)</span></div>
                     <div class="sub" style="margin-top:3px;color:#cbd5e1;">📉 <span id="tr-decay-ram">10일 누적: ETF -41.5% vs MU×2 (-48.3%) ➔ 괴리 +6.85%p [🔥 양의복리 추세 탄력]</span></div>
@@ -187,28 +187,28 @@
                 <div class="tr-box" >
                     <div class="sig-hd">
                         <div><b>코스닥레버 스윙 트랑셰</b> (<span id="">765</span>주) <span class="tr-badge tr-sim">🧪 모의 프리뷰</span></div>
-                        <div class="neg" id="" style="font-size:0.9rem;">-3.09%</div>
+                        <div class="neg" id="" style="font-size:0.9rem;">-6.17%</div>
                     </div>
                     <div class="range-wrap">
                         <div class="range-labels">
                             <span class="neg" id="">🛡️스탑 ₩3,807</span>
-                            <span style="color:#38bdf8;font-weight:bold;" id="">현재 ₩3,925</span>
+                            <span style="color:#38bdf8;font-weight:bold;" id="">현재 ₩3,800</span>
                             <span class="pos" id="">🎯목표 ₩4,536</span>
                         </div>
                         <div class="range-track">
-                            <div class="range-fill" id="" style="width:16%;"></div>
-                            <div class="range-dot" id="" style="left:16%;"></div>
+                            <div class="range-fill" id="" style="width:3%;"></div>
+                            <div class="range-dot" id="" style="left:3%;"></div>
                         </div>
                         <div class="range-Labels-sub">
-                            <span id="">스탑까지 -3.0% 여유</span>
-                            <span id="">익절까지 +15.6% 남음</span>
+                            <span id="">스탑까지 --0.2% 여유</span>
+                            <span id="">익절까지 +19.4% 남음</span>
                         </div>
                     </div>
                     <div class="tr-ft">
-                        <span>단독 손익: <b class="neg" id="">-95,625원 (-10만 원)</b> (원금 309만)</span>
+                        <span>단독 손익: <b class="neg" id="">-191,250원 (-20만 원)</b> (원금 309만)</span>
                     </div>
                     <div class="sub" style="margin-top:4px;">💡 MTS 합산: 3,354주 · 평단 ₩6,152 | <span id="">진입가 ₩4,050 가정 시뮬레이션 (/매수 명령어로 실전 전환)</span></div>
-                    <div class="sub" style="margin-top:3px;color:#cbd5e1;">📉 <span id="tr-decay-kodex_lev">10일 누적: ETF -8.7% vs 코스닥150×2 (-7.3%) ➔ 괴리 -1.45%p [🟢 정상 추적]</span></div>
+                    <div class="sub" style="margin-top:3px;color:#cbd5e1;">📉 <span id="tr-decay-kodex_lev">10일 누적: ETF -11.6% vs 코스닥150×2 (-10.0%) ➔ 괴리 -1.65%p [🟢 정상 추적]</span></div>
                 </div>
     </div>
 
@@ -253,80 +253,80 @@
         <div class="sig-box" style="border-left-color:#f87171;">
             <div class="sig-hd">
                 <div>
-                    <b>🇰🇷 KODEX 코스닥150레버리지</b> <span id="sig-price-kq"><span class="sub">₩3,925 (+4.81%)</span></span><br>
-                    <span class="sub">20일 추세 &amp; 내 수익:</span> <span id="sig-ret-kq"><span class="neg">-36.2%</span></span>
+                    <b>🇰🇷 KODEX 코스닥150레버리지</b> <span id="sig-price-kq"><span class="sub">₩3,800 (+1.47%)</span></span><br>
+                    <span class="sub">20일 추세 &amp; 내 수익:</span> <span id="sig-ret-kq"><span class="neg">-38.2%</span></span>
                 </div>
-                <div style="text-align:right;" id="sig-spark-kq"><svg width="86" height="28" viewBox="0 0 86 28" style="overflow:visible;"><polyline fill="none" stroke="#f87171" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" points="4.0,6.8 8.1,4.0 12.2,10.5 16.3,8.2 20.4,15.8 24.5,21.7 28.6,23.8 32.7,19.0 36.8,11.4 40.9,13.3 45.1,13.0 49.2,19.5 53.3,21.8 57.4,19.5 61.5,14.8 65.6,22.6 69.7,24.0 73.8,18.7 77.9,20.8 82.0,18.4"/><circle cx="82.0" cy="18.4" r="3" fill="#f87171"/></svg></div>
+                <div style="text-align:right;" id="sig-spark-kq"><svg width="86" height="28" viewBox="0 0 86 28" style="overflow:visible;"><polyline fill="none" stroke="#f87171" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" points="4.0,6.8 8.1,4.0 12.2,10.5 16.3,8.2 20.4,15.8 24.5,21.7 28.6,23.8 32.7,19.0 36.8,11.4 40.9,13.3 45.1,13.0 49.2,19.5 53.3,21.8 57.4,19.5 61.5,14.8 65.6,22.6 69.7,24.0 73.8,18.7 77.9,20.8 82.0,20.1"/><circle cx="82.0" cy="20.1" r="3" fill="#f87171"/></svg></div>
             </div>
-            <div class="bar-bg"><div class="bar-fill" id="sig-bar-kq" style="width:25%;background:#38bdf8;"></div></div>
+            <div class="bar-bg"><div class="bar-fill" id="sig-bar-kq" style="width:50%;background:#38bdf8;"></div></div>
             <div class="metric-grid">
-                <div class="m-cell"><span class="sub">RSI(14)</span><br><b id="sig-rsi-kq">42.8</b> <span class="sub">(34)</span></div>
-                <div class="m-cell"><span class="sub">20일 이격</span><br><b id="sig-disp-kq">-3.7%</b> <span class="sub">(-9%)</span></div>
-                <div class="m-cell"><span class="sub">볼린저 %B</span><br><b id="sig-pctb-kq">0.41</b></div>
-                <div class="m-cell"><span class="sub">거래량</span><br><b id="sig-vol-kq">0.8배</b></div>
+                <div class="m-cell"><span class="sub">RSI(14)</span><br><b id="sig-rsi-kq">41.1</b> <span class="sub">(34)</span></div>
+                <div class="m-cell"><span class="sub">20일 이격</span><br><b id="sig-disp-kq">-6.6%</b> <span class="sub">(-9%)</span></div>
+                <div class="m-cell"><span class="sub">볼린저 %B</span><br><b id="sig-pctb-kq">0.35</b></div>
+                <div class="m-cell"><span class="sub">거래량</span><br><b id="sig-vol-kq">1.1배</b></div>
             </div>
             <div class="flow-row">
-                👥 수급: <b id="sig-flow-kq">외인 -324.8만주 · 기관 -607.1만주 · 개인 +961.8만주</b> <span class="badge" id="sig-fbadge-kq">⚪ 개인주도(메이저매도)</span>
+                👥 수급: <b id="sig-flow-kq">외인 +13.4만주 · 기관 -430.5만주 · 개인 +412.4만주</b> <span class="badge" id="sig-fbadge-kq">🟡 외인·기관 수급 공방</span>
             </div>
-            <div class="flow-row" id="sig-decay-wrap-kq">📉 <span id="sig-decay-kq">10일 누적: ETF -8.7% vs 코스닥150×2 (-7.3%) ➔ 괴리 -1.45%p [🟢 정상 추적]</span></div>
+            <div class="flow-row" id="sig-decay-wrap-kq">📉 <span id="sig-decay-kq">10일 누적: ETF -11.6% vs 코스닥150×2 (-10.0%) ➔ 괴리 -1.65%p [🟢 정상 추적]</span></div>
             <div class="pill-row">
                 <span class="pill pill-off" id="sig-p1-kq">⚫ 과매도</span>
                 <span class="pill pill-off" id="sig-p2-kq">⚫ 지지선</span>
                 <span class="pill pill-on" id="sig-p3-kq">🟢 MACD↑</span>
-                <span class="pill pill-off" id="sig-p4-kq">⚫ 실수급</span>
+                <span class="pill pill-on" id="sig-p4-kq">🟢 실수급</span>
             </div>
             <div class="sig-ft">
-                <span class="" id="sig-txt-kq">⏸ 중립·관망 (1/4)</span>
+                <span class="" id="sig-txt-kq">⏸ 중립·관망 (2/4)</span>
                 <span class="warn" id="sig-cash-kq">➔ 스윙 트랑셰 감시 · 현금 대기</span>
             </div>
         </div>
         <div class="sig-box" style="border-left-color:#fbbf24;">
             <div class="sig-hd">
                 <div>
-                    <b>🔧 와이지-원</b> <span id="sig-price-yg"><span class="sub">₩8,800 (+3.17%)</span></span><br>
-                    <span class="sub">20일 추세 &amp; 내 수익:</span> <span id="sig-ret-yg"><span class="neg">-31.8%</span></span>
+                    <b>🔧 와이지-원</b> <span id="sig-price-yg"><span class="sub">₩8,900 (+4.34%)</span></span><br>
+                    <span class="sub">20일 추세 &amp; 내 수익:</span> <span id="sig-ret-yg"><span class="neg">-31.1%</span></span>
                 </div>
-                <div style="text-align:right;" id="sig-spark-yg"><svg width="86" height="28" viewBox="0 0 86 28" style="overflow:visible;"><polyline fill="none" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" points="4.0,7.9 8.1,4.7 12.2,6.7 16.3,4.0 20.4,6.7 24.5,13.8 28.6,13.1 32.7,9.5 36.8,10.1 40.9,12.0 45.1,12.5 49.2,14.5 53.3,12.9 57.4,12.2 61.5,14.5 65.6,20.9 69.7,24.0 73.8,20.4 77.9,23.8 82.0,21.4"/><circle cx="82.0" cy="21.4" r="3" fill="#fbbf24"/></svg></div>
+                <div style="text-align:right;" id="sig-spark-yg"><svg width="86" height="28" viewBox="0 0 86 28" style="overflow:visible;"><polyline fill="none" stroke="#fbbf24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" points="4.0,7.9 8.1,4.7 12.2,6.7 16.3,4.0 20.4,6.7 24.5,13.8 28.6,13.1 32.7,9.5 36.8,10.1 40.9,12.0 45.1,12.5 49.2,14.5 53.3,12.9 57.4,12.2 61.5,14.5 65.6,20.9 69.7,24.0 73.8,20.4 77.9,23.8 82.0,20.4"/><circle cx="82.0" cy="20.4" r="3" fill="#fbbf24"/></svg></div>
             </div>
-            <div class="bar-bg"><div class="bar-fill" id="sig-bar-yg" style="width:100%;background:#4ade80;"></div></div>
+            <div class="bar-bg"><div class="bar-fill" id="sig-bar-yg" style="width:75%;background:#4ade80;"></div></div>
             <div class="metric-grid">
-                <div class="m-cell"><span class="sub">RSI(14)</span><br><b id="sig-rsi-yg">35.8</b> <span class="sub">(38)</span></div>
-                <div class="m-cell"><span class="sub">20일 이격</span><br><b id="sig-disp-yg">-9.1%</b> <span class="sub">(-7%)</span></div>
-                <div class="m-cell"><span class="sub">볼린저 %B</span><br><b id="sig-pctb-yg">0.17</b></div>
-                <div class="m-cell"><span class="sub">거래량</span><br><b id="sig-vol-yg">0.3배</b></div>
+                <div class="m-cell"><span class="sub">RSI(14)</span><br><b id="sig-rsi-yg">37.3</b> <span class="sub">(38)</span></div>
+                <div class="m-cell"><span class="sub">20일 이격</span><br><b id="sig-disp-yg">-8.1%</b> <span class="sub">(-7%)</span></div>
+                <div class="m-cell"><span class="sub">볼린저 %B</span><br><b id="sig-pctb-yg">0.20</b></div>
+                <div class="m-cell"><span class="sub">거래량</span><br><b id="sig-vol-yg">4.5배</b></div>
             </div>
             <div class="flow-row">
-                👥 수급: <b id="sig-flow-yg">외인 -5,119주 · 기관 +2.8만주 · 개인 -2.3만주</b> <span class="badge" id="sig-fbadge-yg">✅메이저 합산 3일연속 순매수</span>
+                👥 수급: <b id="sig-flow-yg">외인 -30.1만주 · 기관 +1.5만주 · 개인 +24.7만주</b> <span class="badge" id="sig-fbadge-yg">🟡 외인·기관 수급 공방</span>
             </div>
             
             <div class="pill-row">
                 <span class="pill pill-on" id="sig-p1-yg">🟢 과매도</span>
-                <span class="pill pill-on" id="sig-p2-yg">🟢 지지선</span>
+                <span class="pill pill-off" id="sig-p2-yg">⚫ 지지선</span>
                 <span class="pill pill-on" id="sig-p3-yg">🟢 MACD↑</span>
                 <span class="pill pill-on" id="sig-p4-yg">🟢 실수급</span>
             </div>
             <div class="sig-ft">
-                <span class="pos" id="sig-txt-yg">🔥 4중검증 완벽타점 (4/4)</span>
-                <span class="warn" id="sig-cash-yg">➔ 진바닥 강세 전환 (캐터펄트 이식)</span>
+                <span class="pos" id="sig-txt-yg">✅ 1차 검증타점 (3/4)</span>
+                <span class="warn" id="sig-cash-yg">➔ 메이저 매집 확인 (스윙금고 이식)</span>
             </div>
         </div>
         <div class="sig-box" style="border-left-color:#c084fc;">
             <div class="sig-hd">
                 <div>
-                    <b>🧬 오름테라퓨틱</b> <span id="sig-price-or1"><span class="sub">₩13,180 (-1.27%)</span></span><br>
-                    <span class="sub">20일 추세 &amp; 내 수익:</span> <span id="sig-ret-or1"><span class="neg">-87.7%</span></span>
+                    <b>🧬 오름테라퓨틱</b> <span id="sig-price-or1"><span class="sub">₩13,050 (-2.25%)</span></span><br>
+                    <span class="sub">20일 추세 &amp; 내 수익:</span> <span id="sig-ret-or1"><span class="neg">-87.8%</span></span>
                 </div>
-                <div style="text-align:right;" id="sig-spark-or1"><svg width="86" height="28" viewBox="0 0 86 28" style="overflow:visible;"><polyline fill="none" stroke="#c084fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" points="4.0,4.6 8.1,4.0 12.2,6.5 16.3,4.5 20.4,5.7 24.5,9.8 28.6,11.0 32.7,11.0 36.8,7.9 40.9,8.1 45.1,6.9 49.2,16.2 53.3,18.2 57.4,19.2 61.5,13.3 65.6,20.5 69.7,24.0 73.8,21.7 77.9,18.7 82.0,19.9"/><circle cx="82.0" cy="19.9" r="3" fill="#c084fc"/></svg></div>
+                <div style="text-align:right;" id="sig-spark-or1"><svg width="86" height="28" viewBox="0 0 86 28" style="overflow:visible;"><polyline fill="none" stroke="#c084fc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" points="4.0,4.6 8.1,4.0 12.2,6.5 16.3,4.5 20.4,5.7 24.5,9.8 28.6,11.0 32.7,11.0 36.8,7.9 40.9,8.1 45.1,6.9 49.2,16.2 53.3,18.2 57.4,19.2 61.5,13.3 65.6,20.5 69.7,24.0 73.8,21.7 77.9,18.7 82.0,20.8"/><circle cx="82.0" cy="20.8" r="3" fill="#c084fc"/></svg></div>
             </div>
             <div class="bar-bg"><div class="bar-fill" id="sig-bar-or1" style="width:50%;background:#4ade80;"></div></div>
             <div class="metric-grid">
-                <div class="m-cell"><span class="sub">RSI(14)</span><br><b id="sig-rsi-or1">31.0</b> <span class="sub">(32)</span></div>
-                <div class="m-cell"><span class="sub">20일 이격</span><br><b id="sig-disp-or1">-7.2%</b> <span class="sub">(-11%)</span></div>
-                <div class="m-cell"><span class="sub">볼린저 %B</span><br><b id="sig-pctb-or1">0.22</b></div>
-                <div class="m-cell"><span class="sub">거래량</span><br><b id="sig-vol-or1">0.8배</b></div>
+                <div class="m-cell"><span class="sub">RSI(14)</span><br><b id="sig-rsi-or1">30.5</b> <span class="sub">(32)</span></div>
+                <div class="m-cell"><span class="sub">20일 이격</span><br><b id="sig-disp-or1">-8.1%</b> <span class="sub">(-11%)</span></div>
+                <div class="m-cell"><span class="sub">볼린저 %B</span><br><b id="sig-pctb-or1">0.19</b></div>
+                <div class="m-cell"><span class="sub">거래량</span><br><b id="sig-vol-or1">1.3배</b></div>
             </div>
             <div class="flow-row">
-                👥 수급: <b id="sig-flow-or1">외인 +4,705주 · 기관 +2.1만주 · 개인 -2.5만주</b> <span class="badge" id="sig-fbadge-or1">🔥외국인 3일연속 매집!</span>
+                👥 수급: <b id="sig-flow-or1">외인 -4.4만주 · 기관 +1.7만주 · 개인 +2.8만주</b> <span class="badge" id="sig-fbadge-or1">🔥기관(투신·사모) 3일연속 매집!</span>
             </div>
             
             <div class="pill-row">
@@ -343,20 +343,20 @@
         <div class="sig-box" style="border-left-color:#4ade80;">
             <div class="sig-hd">
                 <div>
-                    <b>🧬 앱클론</b> <span id="sig-price-ab"><span class="sub">₩20,600 (-11.40%)</span></span><br>
-                    <span class="sub">20일 추세 &amp; 내 수익:</span> <span id="sig-ret-ab"><span class="neg">-60.9%</span></span>
+                    <b>🧬 앱클론</b> <span id="sig-price-ab"><span class="sub">₩20,000 (-13.98%)</span></span><br>
+                    <span class="sub">20일 추세 &amp; 내 수익:</span> <span id="sig-ret-ab"><span class="neg">-62.1%</span></span>
                 </div>
-                <div style="text-align:right;" id="sig-spark-ab"><svg width="86" height="28" viewBox="0 0 86 28" style="overflow:visible;"><polyline fill="none" stroke="#4ade80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" points="4.0,18.7 8.1,19.1 12.2,21.7 16.3,20.3 20.4,19.1 24.5,24.0 28.6,21.7 32.7,14.7 36.8,8.6 40.9,10.5 45.1,7.8 49.2,7.7 53.3,4.9 57.4,4.0 61.5,4.4 65.6,6.8 69.7,5.2 73.8,6.1 77.9,7.1 82.0,13.5"/><circle cx="82.0" cy="13.5" r="3" fill="#4ade80"/></svg></div>
+                <div style="text-align:right;" id="sig-spark-ab"><svg width="86" height="28" viewBox="0 0 86 28" style="overflow:visible;"><polyline fill="none" stroke="#4ade80" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" points="4.0,18.7 8.1,19.1 12.2,21.7 16.3,20.3 20.4,19.1 24.5,24.0 28.6,21.7 32.7,14.7 36.8,8.6 40.9,10.5 45.1,7.8 49.2,7.7 53.3,4.9 57.4,4.0 61.5,4.4 65.6,6.8 69.7,5.2 73.8,6.1 77.9,7.1 82.0,15.0"/><circle cx="82.0" cy="15.0" r="3" fill="#4ade80"/></svg></div>
             </div>
             <div class="bar-bg"><div class="bar-fill" id="sig-bar-ab" style="width:0%;background:#38bdf8;"></div></div>
             <div class="metric-grid">
-                <div class="m-cell"><span class="sub">RSI(14)</span><br><b id="sig-rsi-ab">44.3</b> <span class="sub">(32)</span></div>
-                <div class="m-cell"><span class="sub">20일 이격</span><br><b id="sig-disp-ab">-2.4%</b> <span class="sub">(-11%)</span></div>
-                <div class="m-cell"><span class="sub">볼린저 %B</span><br><b id="sig-pctb-ab">0.46</b></div>
-                <div class="m-cell"><span class="sub">거래량</span><br><b id="sig-vol-ab">1.5배</b></div>
+                <div class="m-cell"><span class="sub">RSI(14)</span><br><b id="sig-rsi-ab">42.5</b> <span class="sub">(32)</span></div>
+                <div class="m-cell"><span class="sub">20일 이격</span><br><b id="sig-disp-ab">-5.1%</b> <span class="sub">(-11%)</span></div>
+                <div class="m-cell"><span class="sub">볼린저 %B</span><br><b id="sig-pctb-ab">0.41</b></div>
+                <div class="m-cell"><span class="sub">거래량</span><br><b id="sig-vol-ab">3.0배</b></div>
             </div>
             <div class="flow-row">
-                👥 수급: <b id="sig-flow-ab">외인 -3,029주 · 기관 -4,462주 · 개인 +6,407주</b> <span class="badge" id="sig-fbadge-ab">⚪ 개인주도(메이저매도)</span>
+                👥 수급: <b id="sig-flow-ab">외인 -6.2만주 · 기관 -2.2만주 · 개인 +11.3만주</b> <span class="badge" id="sig-fbadge-ab">⚪ 개인주도(메이저매도)</span>
             </div>
             
             <div class="pill-row">
@@ -386,15 +386,15 @@
             <div class="cata-grid">
                 <div class="cata-cell">
                     <div class="sub">🧬 오름테라퓨틱 (수급·타점)</div>
-                    <div style="margin:3px 0;"><b id="bio-or-blocks">🟩🟩⬜⬜</b> <span class="sub">(2/4) | 거래량 <b id="bio-or-vol">0.8배</b></span></div>
-                    <div class="sub" id="bio-or-flow" style="font-size:0.68rem;margin-bottom:2px;">외인 +4,705주 · 기관 +2.1만주 · 개인 -2.5만주</div>
+                    <div style="margin:3px 0;"><b id="bio-or-blocks">🟩🟩⬜⬜</b> <span class="sub">(2/4) | 거래량 <b id="bio-or-vol">1.3배</b></span></div>
+                    <div class="sub" id="bio-or-flow" style="font-size:0.68rem;margin-bottom:2px;">외인 -4.4만주 · 기관 +1.7만주 · 개인 +2.8만주</div>
                     <div class="pos" id="bio-or-verdict" style="font-size:0.72rem;">🔥 캐터펄트 이식 적기! (수급/타점 충족)</div>
                 </div>
                 <div class="cata-cell">
                     <div class="sub">🧬 앱클론 (수급·타점)</div>
-                    <div style="margin:3px 0;"><b id="bio-ab-blocks">⬜⬜⬜⬜</b> <span class="sub">(0/4) | 거래량 <b id="bio-ab-vol">1.5배</b></span></div>
-                    <div class="sub" id="bio-ab-flow" style="font-size:0.68rem;margin-bottom:2px;">외인 -3,029주 · 기관 -4,462주 · 개인 +6,407주</div>
-                    <div class="sub" id="bio-ab-verdict" style="font-size:0.72rem;">⏸ 대기 (⚪ 개인주도(메이저매도))</div>
+                    <div style="margin:3px 0;"><b id="bio-ab-blocks">⬜⬜⬜⬜</b> <span class="sub">(0/4) | 거래량 <b id="bio-ab-vol">3.0배</b></span></div>
+                    <div class="sub" id="bio-ab-flow" style="font-size:0.68rem;margin-bottom:2px;">외인 -6.2만주 · 기관 -2.2만주 · 개인 +11.3만주</div>
+                    <div class="pos" id="bio-ab-verdict" style="font-size:0.72rem;">🔥 캐터펄트 이식 적기! (수급/타점 충족)</div>
                 </div>
             </div>
         </div>
@@ -412,7 +412,7 @@
             <span class="sub">최근 7일 기준</span>
         </div>
         <div id="bio-disc-list">
-            <div class="sub">최근 7일 내 주요 바이오 공시·임상 변동 없음</div>
+            <div class="bio-item"><div class="bio-hd"><span class="bio-tag bio-neu">🟡 일반공시/동향 · 앱클론</span><span class="meta">11/26 14:20</span></div><a href="https://news.google.com/rss/articles/CBMiWkFVX3lxTE5QVk1EWENiSXBVZEtsZ2djTHN2MG0wazhsSGJhdlRZdE5kQzZZRHBRRUtDeW9yN3B2Z2w3Xy10YjJBWnJfMXhSZG9RYkNCZ01Mb2YxdnFNS0VuUQ?oc=5" target="_blank">美 중국바이오 규제권고에 앱클론 13% 하락</a><div class="bio-act">💡 AI 판독: 단순 참고 · 기존 보유 비중 유지</div></div><div class="bio-item"><div class="bio-hd"><span class="bio-tag bio-neu">🟡 일반공시/동향 · 앱클론</span><span class="meta">11/26 15:27</span></div><a href="https://news.google.com/rss/articles/CBMiZkFVX3lxTE9yWjhmUldsNHlkRG9oRU9vZEhHQTZIWUdhYXktTGxLZGRhV2FnZ3FuZWJjYjdzbzhRRE9vaXFFa3hUUldsMzlvaTRMM1Nha2ZTdDd6Mk8zT1NjWXAyYVlTWkJuemhzUQ?oc=5" target="_blank">[특징주] 앱클론, 장중 2만원선 하회</a><div class="bio-act">💡 AI 판독: 단순 참고 · 기존 보유 비중 유지</div></div>
         </div>
     
     </div>
@@ -420,15 +420,15 @@
     <div class="card">
         <h2>💼 보유 종목 상세 평가 &amp; 포트폴리오 비중</h2>
         <div style="width:210px;margin:0 auto 12px auto;"><canvas id="pfChart"></canvas></div>
-        <div class="row"><span><b>RAM 합산</b> (<span id="hold-ram-qty">6,460</span>주 · 평단 $<span id="hold-ram-avg">9.6925</span>) <span class="badge" id="hold-ram-sess">🌙애프터</span><br><span class="sub" id="hold-ram-sub">현재 $3.88 | 모체 MU 기관자금(CMF): -0.13</span></span><span class="neg" id="hold-ram-val" style="text-align:right;">-59.97% (-5,032만)<br>$25,065 (3,358만)</span></div>
-        <div class="row"><span><b>코스닥150레버리지</b> (<span id="hold-kq-qty">3,354</span>주)<br><span class="sub" id="hold-kq-sub">현재 ₩3,925 (+4.81%) | 외인 -324.8만주 · 기관 -607.1만주 · 개인 +961.8만주</span></span><span class="neg" id="hold-kq-val" style="text-align:right;">-36.20% (-747만)<br>13,164,450원</span></div>
-        <div class="row"><span><b>와이지-원</b> (<span id="hold-yg-qty">656</span>주 · 평단 12,910원)<br><span class="sub" id="hold-yg-sub">현재 ₩8,800 (+3.17%) | 외인 -5,119주 · 기관 +2.8만주 · 개인 -2.3만주</span></span><span class="neg" id="hold-yg-val" style="text-align:right;">-31.84% (-270만)<br>5,772,800원</span></div>
-        <div class="row"><span><b>오름테라퓨틱(계좌1)</b> (1,097주 · 평단 107,113원)<br><span class="sub" id="hold-or1-sub">현재 ₩13,180 (-1.27%) | 외인 +4,705주 · 기관 +2.1만주 · 개인 -2.5만주</span></span><span class="neg" id="hold-or1-val" style="text-align:right;">-87.70% (-10,305만)<br>14,458,460원</span></div>
-        <div class="row"><span><b>오름테라퓨틱(계좌2)</b> (256주 · 평단 96,650원)<br><span class="sub" id="hold-or2-sub">현재 ₩13,180 (-1.27%)</span></span><span class="neg" id="hold-or2-val" style="text-align:right;">-86.36% (-2,137만)<br>3,374,080원</span></div>
-        <div class="row"><span><b>앱클론</b> (256주 · 평단 52,735원)<br><span class="sub" id="hold-ab-sub">현재 ₩20,600 (-11.40%) | 외인 -3,029주 · 기관 -4,462주 · 개인 +6,407주</span></span><span class="neg" id="hold-ab-val" style="text-align:right;">-60.94% (-823만)<br>5,273,600원</span></div>
+        <div class="row"><span><b>RAM 합산</b> (<span id="hold-ram-qty">6,460</span>주 · 평단 $<span id="hold-ram-avg">9.6925</span>) <span class="badge" id="hold-ram-sess">🌙애프터</span><br><span class="sub" id="hold-ram-sub">현재 $3.88 | 모체 MU 기관자금(CMF): -0.13</span></span><span class="neg" id="hold-ram-val" style="text-align:right;">-59.97% (-5,047만)<br>$25,065 (3,368만)</span></div>
+        <div class="row"><span><b>코스닥150레버리지</b> (<span id="hold-kq-qty">3,354</span>주)<br><span class="sub" id="hold-kq-sub">현재 ₩3,800 (+1.47%) | 외인 +13.4만주 · 기관 -430.5만주 · 개인 +412.4만주</span></span><span class="neg" id="hold-kq-val" style="text-align:right;">-38.23% (-789만)<br>12,745,200원</span></div>
+        <div class="row"><span><b>와이지-원</b> (<span id="hold-yg-qty">656</span>주 · 평단 12,910원)<br><span class="sub" id="hold-yg-sub">현재 ₩8,900 (+4.34%) | 외인 -30.1만주 · 기관 +1.5만주 · 개인 +24.7만주</span></span><span class="neg" id="hold-yg-val" style="text-align:right;">-31.06% (-264만)<br>5,838,400원</span></div>
+        <div class="row"><span><b>오름테라퓨틱(계좌1)</b> (1,097주 · 평단 107,113원)<br><span class="sub" id="hold-or1-sub">현재 ₩13,050 (-2.25%) | 외인 -4.4만주 · 기관 +1.7만주 · 개인 +2.8만주</span></span><span class="neg" id="hold-or1-val" style="text-align:right;">-87.82% (-10,319만)<br>14,315,850원</span></div>
+        <div class="row"><span><b>오름테라퓨틱(계좌2)</b> (256주 · 평단 96,650원)<br><span class="sub" id="hold-or2-sub">현재 ₩13,050 (-2.25%)</span></span><span class="neg" id="hold-or2-val" style="text-align:right;">-86.50% (-2,141만)<br>3,340,800원</span></div>
+        <div class="row"><span><b>앱클론</b> (256주 · 평단 52,735원)<br><span class="sub" id="hold-ab-sub">현재 ₩20,000 (-13.98%) | 외인 -6.2만주 · 기관 -2.2만주 · 개인 +11.3만주</span></span><span class="neg" id="hold-ab-val" style="text-align:right;">-62.07% (-839만)<br>5,120,000원</span></div>
     </div>
 
-    <div class="card"><h2>📰 최근 48시간 최신 속보</h2><div class="n-item"><div class="n-hd"><span class="tag">[반도체]</span><span class="meta">11/24 14:45 | 비즈니스포스트</span></div><a href="https://news.google.com/rss/articles/CBMic0FVX3lxTE82cEFHNFloSXZNb25lVlQwUW5Ycld0TnY2bEt6TWRPb01ZQ0ZPMTZrR2x4ZDZXMjZpVUczRnFUblRjLVMwN01wY2RjRDB1WWl1dm1JbzE0MjBnbmRfZzM0Z0tSZlA5WTM1Y1NONUlZVmp0S1E?oc=5" target="_blank">젠슨 황 엔비디아 복귀에 삼성전자·SK하이닉스 '한숨 돌려', 중국 AI칩 수출통제는 여전히 부담</a></div><div class="n-item"><div class="n-hd"><span class="tag">[반도체]</span><span class="meta">11/24 15:22 | 뉴스핌</span></div><a href="https://news.google.com/rss/articles/CBMiXEFVX3lxTFBHSUQ0bldCdWVYelZScS1sZXE1a1BFZ29KSUYzR3FnTVU4UEthTkxRcEJFYWxiOEFWQ3U1MEpiUEtRZmZjdUI5VC1aSEZQOTN6OWlmeEdETGFIM2VO?oc=5" target="_blank">[글로벌 이슈K] 젠슨 황 돌아왔지만…삼성·SK HBM 호황, AI 서버값 급등 변수</a></div><div class="n-item"><div class="n-hd"><span class="tag">[매크로]</span><span class="meta">11/26 09:13 | 남도일보</span></div><a href="https://news.google.com/rss/articles/CBMibEFVX3lxTE5qM0FMVlZNdW9IMU5zZ2VBQnZBUHFUZFpkVU8zdWlpaFF1Z1ROZTNUZzVKVE1YTUZOa0JBQWFQWHJaX1NqQ09SdUxWR2xPQmo1ZjJwOTlWYm1fWUM2UGlXc3VnQVRzRUZvbDg5ONIBcEFVX3lxTE1lMlI5X3JvUWNQQ2wxVGRia243Z2dfdG5tTTZwZnE0aFJWRXFjdTFXZ2N3VENzZXhxQTh1c2ZQZ1lRb1pQSEtiTEtCNkN0ZXpzdV9YWTdWTHJLX05PU19rR2owRkV4VHNlVC12MjhxQm8?oc=5" target="_blank">[오늘 금시세]美 국채금리 하락에 금값 ‘반등’…국내 금 0.98%↑</a></div></div>
+    <div class="card"><h2>📰 최근 48시간 최신 속보</h2><div class="n-item"><div class="n-hd"><span class="tag">[반도체]</span><span class="meta">11/25 11:44 | 서울이코노미뉴스</span></div><a href="https://news.google.com/rss/articles/CBMibkFVX3lxTFBLa21oOE4wdnZhenRFMzJibFlpLWswSWx1QU1lUXBTRGFvQXpTT3Rzb0ZQX09YYjQybzNXVmtqYUctNm9ON24wOWFrVEx0Ym1OSno3aExHd3B1TWdxengxTUNOUWNkTWRBTWxhX2RB?oc=5" target="_blank">HBM 가격 두배 뛰고 구글 부상…삼성전자·SK하이닉스 경쟁축 이동</a></div><div class="n-item"><div class="n-hd"><span class="tag">[반도체]</span><span class="meta">11/25 13:05 | 더퍼블릭</span></div><a href="https://news.google.com/rss/articles/CBMia0FVX3lxTE5XRW8tXzNqdGd0SlJ3Q2VGVkUxSFpPYUtKMHV2cGhoMkRQOV9abXBlWDdPLXRrNkM4NWZZYXJQVGpqMFMzNHJNdlhtOGQtM25nVW1HbkhscFpxQjQ3NV9nZ0FSd0xJUUU0cXUw0gFvQVVfeXFMUHlsZTJxTVo1TXl5azhJWXpfNGVlODJXTEVSSWNHVmpnbmFlS05UMlNNMzRTSVdQLVpheTY1U053SDBZQ183OXRhTXpqRVRHTDFpVFR4YXVDREczal9paGdxN0VyRE12NVNhUW93aVA0?oc=5" target="_blank">구글, HBM '2위 큰손' 부상… 엔비디아 중심 시장 재편에 삼성·SK 시험대</a></div><div class="n-item"><div class="n-hd"><span class="tag">[매크로]</span><span class="meta">11/26 09:13 | 남도일보</span></div><a href="https://news.google.com/rss/articles/CBMibEFVX3lxTE5qM0FMVlZNdW9IMU5zZ2VBQnZBUHFUZFpkVU8zdWlpaFF1Z1ROZTNUZzVKVE1YTUZOa0JBQWFQWHJaX1NqQ09SdUxWR2xPQmo1ZjJwOTlWYm1fWUM2UGlXc3VnQVRzRUZvbDg5ONIBcEFVX3lxTE1lMlI5X3JvUWNQQ2wxVGRia243Z2dfdG5tTTZwZnE0aFJWRXFjdTFXZ2N3VENzZXhxQTh1c2ZQZ1lRb1pQSEtiTEtCNkN0ZXpzdV9YWTdWTHJLX05PU19rR2owRkV4VHNlVC12MjhxQm8?oc=5" target="_blank">[오늘 금시세]美 국채금리 하락에 금값 ‘반등’…국내 금 0.98%↑</a></div><div class="n-item"><div class="n-hd"><span class="tag">[바이오]</span><span class="meta">11/26 14:20 | 한국경제</span></div><a href="https://news.google.com/rss/articles/CBMiWkFVX3lxTE5QVk1EWENiSXBVZEtsZ2djTHN2MG0wazhsSGJhdlRZdE5kQzZZRHBRRUtDeW9yN3B2Z2w3Xy10YjJBWnJfMXhSZG9RYkNCZ01Mb2YxdnFNS0VuUQ?oc=5" target="_blank">美 중국바이오 규제권고에 앱클론 13% 하락</a></div></div>
 
     <script>
         const WORKER_API_URL = "https://stock-reply-bot.heondol4011.workers.dev/";
@@ -438,7 +438,7 @@
             data: {
                 labels: ['RAM(반도체)', '바이오(오름·앱클론)', '코스닥150레버리지', '잔여현금', '와이지-원'],
                 datasets: [{
-                    data: [3358, 2310, 1316, 517, 577],
+                    data: [3368, 2277, 1274, 517, 583],
                     backgroundColor: ['#38bdf8', '#c084fc', '#f87171', '#4ade80', '#fbbf24'],
                     borderWidth: 0
                 }]
