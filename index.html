@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
     <title>마스터 관제탑 V9.5 Smart-Money</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script id="v8-state-backup" type="application/json">{"version": "9.5", "updatedAt": "2026-11-27 23:59 KST", "cashKrw": 5173000, "swingVaultKrw": 0, "tax": {"realizedGainKrw": 11678483, "harvestedLossKrw": 0, "cetxSold": false}, "core": {"RAM": {"qty": 5854, "avgUsd": 10.0779}, "KODEX_LEV": {"qty": 3354, "avgKrw": 6152}, "YG1": {"qty": 656, "avgKrw": 12910}, "ORUM1": {"qty": 1097, "avgKrw": 107113}, "ORUM2": {"qty": 256, "avgKrw": 96650}, "ABCLON": {"qty": 256, "avgKrw": 52735}}, "tranches": {"RAM": {"mode": "LIVE", "name": "RAM 스윙 트랑셰", "symbol": "RAM", "currency": "USD", "entryDate": "2026-11-12", "entryPrice": 5.97, "qty": 606, "targetPct": 15, "trailPct": -7, "peakPrice": 5.97}, "KODEX_LEV": {"mode": "SIM", "name": "코스닥레버 스윙 트랑셰", "symbol": "233740.KS", "currency": "KRW", "entryDate": "2026-11-16", "entryPrice": 4050, "qty": 765, "targetPct": 12, "trailPct": -6, "peakPrice": 4050}}, "history": ["11/12: RAM 1차 606주($5.97) 매수 반영 완료"], "sniperLog": {}, "bioSeenIds": {}, "chatId": "921943759"}</script>
+    <script id="v8-state-backup" type="application/json">{"version": "9.5", "updatedAt": "2026-11-28 08:25 KST", "cashKrw": 5173000, "swingVaultKrw": 0, "tax": {"realizedGainKrw": 11678483, "harvestedLossKrw": 0, "cetxSold": false}, "core": {"RAM": {"qty": 5854, "avgUsd": 10.0779}, "KODEX_LEV": {"qty": 3354, "avgKrw": 6152}, "YG1": {"qty": 656, "avgKrw": 12910}, "ORUM1": {"qty": 1097, "avgKrw": 107113}, "ORUM2": {"qty": 256, "avgKrw": 96650}, "ABCLON": {"qty": 256, "avgKrw": 52735}}, "tranches": {"RAM": {"mode": "LIVE", "name": "RAM 스윙 트랑셰", "symbol": "RAM", "currency": "USD", "entryDate": "2026-11-12", "entryPrice": 5.97, "qty": 606, "targetPct": 15, "trailPct": -7, "peakPrice": 5.97}, "KODEX_LEV": {"mode": "SIM", "name": "코스닥레버 스윙 트랑셰", "symbol": "233740.KS", "currency": "KRW", "entryDate": "2026-11-16", "entryPrice": 4050, "qty": 765, "targetPct": 12, "trailPct": -6, "peakPrice": 4050}}, "history": ["11/12: RAM 1차 606주($5.97) 매수 반영 완료"], "sniperLog": {}, "bioSeenIds": {}, "chatId": "921943759"}</script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #070b14; color: #f8fafc; margin: 0; padding: 12px; max-width: 600px; margin: auto; }
         .top-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
@@ -91,19 +91,19 @@
     </div>
 
     <div class="live-bar">
-        <div class="top-sync" id="top-sync-text">스냅샷: 2026-11-28 08:24 KST (₩1,333.0)</div>
+        <div class="top-sync" id="top-sync-text">스냅샷: 2026-11-28 16:45 KST (₩1,333.9)</div>
         <button class="btn-refresh" id="btn-live-refresh" onclick="fetchLiveDashboard()">🔄 실시간 시세·수급 새로고침</button>
     </div>
 
     <div class="kpi-grid">
         <div class="kpi-box">
             <div class="kpi-lbl">총 평가자산 (1차목표 15,131만)</div>
-            <div class="kpi-val" id="kpi-total-eval" style="color:#38bdf8;">9,110만 원</div>
-            <div class="kpi-sub" id="kpi-total-sub">1차 전환선까지 6,021만 원</div>
+            <div class="kpi-val" id="kpi-total-eval" style="color:#38bdf8;">9,113만 원</div>
+            <div class="kpi-sub" id="kpi-total-sub">1차 전환선까지 6,018만 원</div>
         </div>
         <div class="kpi-box">
             <div class="kpi-lbl">원화 환산 총 평가손익</div>
-            <div class="kpi-val neg" id="kpi-total-pnl">-18,238만 원</div>
+            <div class="kpi-val neg" id="kpi-total-pnl">-18,241만 원</div>
             <div class="kpi-sub" id="kpi-total-pnl-sub">주식 수익률 -67.97%</div>
         </div>
         <div class="kpi-box">
@@ -179,7 +179,7 @@
                         </div>
                     </div>
                     <div class="tr-ft">
-                        <span>단독 손익: <b class="neg" id="tr-live-pnl">-1,042.3달러 (-139만 원)</b> (원금 482만)</span>
+                        <span>단독 손익: <b class="neg" id="tr-live-pnl">-1,042.3달러 (-140만 원)</b> (원금 482만)</span>
                     </div>
                     <div class="sub" style="margin-top:4px;">💡 MTS 합산: 6,460주 · 평단 $9.6925 | <span id="tr-live-status">🚨 트레일링 스탑 도달! ($5.94 이하 매도)</span></div>
                     <div class="sub" style="margin-top:3px;color:#cbd5e1;">📉 <span id="tr-decay-ram">10일 누적: ETF -32.3% vs MU×2 (-38.3%) ➔ 괴리 +5.94%p [🔥 양의복리 추세 탄력]</span></div>
@@ -420,7 +420,7 @@
     <div class="card">
         <h2>💼 보유 종목 상세 평가 &amp; 포트폴리오 비중</h2>
         <div style="width:210px;margin:0 auto 12px auto;"><canvas id="pfChart"></canvas></div>
-        <div class="row"><span><b>RAM 합산</b> (<span id="hold-ram-qty">6,460</span>주 · 평단 $<span id="hold-ram-avg">9.6925</span>) <span class="badge" id="hold-ram-sess">🌙애프터</span><br><span class="sub" id="hold-ram-sub">현재 $4.25 | 모체 MU 기관자금(CMF): -0.12</span></span><span class="neg" id="hold-ram-val" style="text-align:right;">-56.15% (-4,687만)<br>$27,455 (3,659만)</span></div>
+        <div class="row"><span><b>RAM 합산</b> (<span id="hold-ram-qty">6,460</span>주 · 평단 $<span id="hold-ram-avg">9.6925</span>) <span class="badge" id="hold-ram-sess">🌙애프터</span><br><span class="sub" id="hold-ram-sub">현재 $4.25 | 모체 MU 기관자금(CMF): -0.12</span></span><span class="neg" id="hold-ram-val" style="text-align:right;">-56.15% (-4,690만)<br>$27,455 (3,662만)</span></div>
         <div class="row"><span><b>코스닥150레버리지</b> (<span id="hold-kq-qty">3,354</span>주)<br><span class="sub" id="hold-kq-sub">현재 ₩4,565 (+20.13%) | 외인 +144.4만주 · 기관 +2164.0만주 · 개인 -2292.4만주</span></span><span class="neg" id="hold-kq-val" style="text-align:right;">-25.80% (-533만)<br>15,311,010원</span></div>
         <div class="row"><span><b>와이지-원</b> (<span id="hold-yg-qty">656</span>주 · 평단 12,910원)<br><span class="sub" id="hold-yg-sub">현재 ₩9,730 (+9.33%) | 외인 +10.2만주 · 기관 +1.5만주 · 개인 -8.0만주</span></span><span class="neg" id="hold-yg-val" style="text-align:right;">-24.63% (-209만)<br>6,382,880원</span></div>
         <div class="row"><span><b>오름테라퓨틱(계좌1)</b> (1,097주 · 평단 107,113원)<br><span class="sub" id="hold-or1-sub">현재 ₩15,730 (+20.54%) | 외인 +5.9만주 · 기관 +5.2만주 · 개인 -10.7만주</span></span><span class="neg" id="hold-or1-val" style="text-align:right;">-85.31% (-10,025만)<br>17,255,810원</span></div>
@@ -428,7 +428,7 @@
         <div class="row"><span><b>앱클론</b> (256주 · 평단 52,735원)<br><span class="sub" id="hold-ab-sub">현재 ₩24,850 (+24.25%) | 외인 +10.4만주 · 기관 +3.8만주 · 개인 -14.2만주</span></span><span class="neg" id="hold-ab-val" style="text-align:right;">-52.88% (-714만)<br>6,361,600원</span></div>
     </div>
 
-    <div class="card"><h2>📰 최근 48시간 최신 속보</h2><div class="n-item"><div class="n-hd"><span class="tag">[매크로]</span><span class="meta">11/28 01:25 | 강릉뉴스</span></div><a href="https://news.google.com/rss/articles/CBMib0FVX3lxTE5sdS0xd05kMWZaTkFRTE1IajR6TVM3dEtVZENsUXVuT0Z1YkJ1RGp6YXJYcTc0bU1BUFlsbVRmRk1ETURRVGNwd2c3aTVBOEYtcXlYQUIyLTlWWi1rOTFUSlJRUGZEQ29IbGpDS2ZvWQ?oc=5" target="_blank">[주간증시분석] 코스닥 주간 9.81% 상승…700선 반등 이어갈까</a></div><div class="n-item"><div class="n-hd"><span class="tag">[바이오]</span><span class="meta">11/26 18:34 | 히트뉴스</span></div><a href="https://news.google.com/rss/articles/CBMia0FVX3lxTE1JV3Y5YjVuU0JFcm1WODFXUVp1LTVuVE9JcnFQZEQ5MDVMNF8xd09vQTlNa2twUmJPN0xMZUVaTTJwX2JrV3QtOE5zd3FMempGaFRITG4tS3pIcW5sOTQ5MmdmS3lIN2phN1lR?oc=5" target="_blank">[주식] 보로노이·알지노믹스·올릭스 두 자릿수 '급등'...앱클론은 14%↓</a></div></div>
+    <div class="card"><h2>📰 최근 48시간 최신 속보</h2><div class="n-item"><div class="n-hd"><span class="tag">[반도체]</span><span class="meta">11/28 08:42 | 핀포인트뉴스</span></div><a href="https://news.google.com/rss/articles/CBMic0FVX3lxTFAybTNKZFVuQzJDRjBHVlpGZjY5a0U2ZUF1OXFnXzhZSlU0QmlLSWZ4c0pZUVlNaEhMRjFYa2RMTDdFVTg0M0hSMkJJc0hiLUdBcWNUNTlFeUphVkVRWExwRzlHRmY0bTl2bUZ3dnl2OGI3NEHSAXdBVV95cUxQWC03YVpURG81eEl0SWN3YnJuVkNUb2owVWtNZW5hb0doeHotQXZnQ0xZQ3VZSzZIcW1aSHZCRHlHdjZDNjNyVkhiY2tHMmVvZUNHdHRTNy0zZk9QeFlGaDBWZDhQXzk1TG05OTZrOFpTZ2t4UzJCVQ?oc=5" target="_blank">엔비디아 신용등급 흔들리고 화웨이 HBM 추격…삼성전자·SK하이닉스 위기일까 기회일까</a></div><div class="n-item"><div class="n-hd"><span class="tag">[매크로]</span><span class="meta">11/28 10:34 | 기호일보</span></div><a href="https://news.google.com/rss/articles/CBMib0FVX3lxTFB3X2FRWHd4ODNHM3U1bDV6MTZycmkwejFiN1JEM0Q1TDBLLXRPWVN4UUg4cXp0ajdZYUJGdHRfMkprN2NmTENJUHNWQkpWanExQXVsTV9wRGNicDlONWxiaG4xMHhXWWFUOC1mMmNvUQ?oc=5" target="_blank">[11월 넷째 주 세계경제동향 브리핑] 코스닥 9.8% 급등…한미 증시 동반 반등</a></div><div class="n-item"><div class="n-hd"><span class="tag">[바이오]</span><span class="meta">11/26 18:34 | 히트뉴스</span></div><a href="https://news.google.com/rss/articles/CBMia0FVX3lxTE1JV3Y5YjVuU0JFcm1WODFXUVp1LTVuVE9JcnFQZEQ5MDVMNF8xd09vQTlNa2twUmJPN0xMZUVaTTJwX2JrV3QtOE5zd3FMempGaFRITG4tS3pIcW5sOTQ5MmdmS3lIN2phN1lR?oc=5" target="_blank">[주식] 보로노이·알지노믹스·올릭스 두 자릿수 '급등'...앱클론은 14%↓</a></div></div>
 
     <script>
         const WORKER_API_URL = "https://stock-reply-bot.heondol4011.workers.dev/";
@@ -438,7 +438,7 @@
             data: {
                 labels: ['RAM(반도체)', '바이오(오름·앱클론)', '코스닥150레버리지', '잔여현금', '와이지-원'],
                 datasets: [{
-                    data: [3659, 2764, 1531, 517, 638],
+                    data: [3662, 2764, 1531, 517, 638],
                     backgroundColor: ['#38bdf8', '#c084fc', '#f87171', '#4ade80', '#fbbf24'],
                     borderWidth: 0
                 }]
